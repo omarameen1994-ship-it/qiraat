@@ -327,7 +327,7 @@ document.addEventListener('keydown',e=>{if(e.target.tagName==='INPUT')return;
 /* boot */
 const th=store.get('theme');if(th)document.documentElement.dataset.theme=th;
 auto=store.get('auto')!=='0';$('autoSw').classList.toggle('on',auto);
-Promise.all([fetch('data.json').then(r=>r.json()),fetch('notes.json').then(r=>r.json()).catch(()=>({}))]).then(([d,n])=>{
+Promise.all([fetch('data.json',{cache:'no-cache'}).then(r=>r.json()),fetch('notes.json',{cache:'no-cache'}).then(r=>r.json()).catch(()=>({}))]).then(([d,n])=>{
   D=d;N=n;
   const q=new URLSearchParams(location.search);let last={};try{last=JSON.parse(store.get('last')||'{}')}catch(e){}
   const rid=q.get('r')||last.r||(D.riwayat.find(r=>r.audio)||{}).id;

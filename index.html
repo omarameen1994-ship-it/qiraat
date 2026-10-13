@@ -1,0 +1,341 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#1f4a39">
+<title>مصحف القراءات</title>
+<meta name="description" content="استمع إلى المصحف الشريف بالروايات العشرين صفحةً صفحة، مع هوامش القراءات العشر.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Amiri+Quran&display=swap" rel="stylesheet">
+<style>
+:root{
+  --green:#1f4a39; --green2:#2c6650; --gold:#c49a3e; --gold2:#e6c97f; --maroon:#8e1b1b;
+  --paper:#fbf6e9; --paper2:#f3ead3; --ink:#1d1a14; --muted:#7a6f5a; --bg:#efe7d3; --card:#fffdf6;
+  --shadow:0 10px 30px rgba(40,30,10,.18);
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --paper:#f4ecd6; --bg:#14211b; --card:#1b2c24; --ink:#efe6cf; --muted:#b9ad90; --paper2:#e9dfc2;
+}}
+:root[data-theme="dark"]{--paper:#f4ecd6; --bg:#14211b; --card:#1b2c24; --ink:#efe6cf; --muted:#b9ad90; --paper2:#e9dfc2}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html,body{height:100%}
+body{font-family:Amiri,serif;background:var(--bg);color:var(--ink);overflow-x:hidden}
+button{font-family:inherit;cursor:pointer;border:none;background:none;color:inherit}
+.star-bg{background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 20 20'><rect width='20' height='20' fill='%231f4a39'/><g fill='none' stroke='%23c49a3e' stroke-width='.9'><rect x='5' y='5' width='10' height='10'/><rect x='5' y='5' width='10' height='10' transform='rotate(45 10 10)'/></g><circle cx='10' cy='10' r='1.4' fill='%23e6c97f'/></svg>")}
+
+/* top bar */
+.top{position:sticky;top:0;z-index:20;display:flex;align-items:center;gap:8px;padding:calc(env(safe-area-inset-top) + 8px) 12px 8px;
+  background:var(--green);color:#fff;box-shadow:0 2px 10px rgba(0,0,0,.2)}
+.brand{font-weight:700;font-size:18px;white-space:nowrap}
+.brand small{display:block;font-size:11px;font-weight:400;color:var(--gold2);margin-top:-3px}
+.top .sp{flex:1}
+.chip{display:flex;align-items:center;gap:6px;padding:6px 12px;border-radius:999px;background:rgba(255,255,255,.12);border:1px solid rgba(230,201,127,.5);
+  font-size:15px;font-weight:700;color:#fff;white-space:nowrap}
+.chip .dot{width:8px;height:8px;border-radius:50%;background:var(--gold2)}
+.icon-btn{width:38px;height:38px;border-radius:50%;display:grid;place-items:center;background:rgba(255,255,255,.1)}
+.icon-btn svg{width:20px;height:20px;fill:#fff}
+
+/* page */
+main{max-width:620px;margin:0 auto;padding:14px 12px 150px}
+.meta{display:flex;justify-content:space-between;align-items:center;font-size:15px;color:var(--muted);padding:0 4px 8px;font-weight:700}
+.meta .sura{color:var(--green);font-size:17px}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .meta .sura{color:var(--gold2)}}
+.stage{perspective:1600px}
+.leaf{position:relative;border-radius:10px;padding:9px;box-shadow:var(--shadow);transform-origin:center;transition:transform .45s cubic-bezier(.3,.7,.3,1),opacity .45s}
+.leaf .inner{background:var(--paper);border-radius:4px;border:2px solid var(--gold);outline:1px solid var(--green);outline-offset:-6px;
+  padding:16px 14px;min-height:60vh;display:flex;align-items:center;justify-content:center;position:relative}
+.leaf img{width:100%;height:auto;display:block;mix-blend-mode:multiply;user-select:none;-webkit-user-drag:none}
+.leaf.out-next{transform:rotateY(-80deg) translateX(-10%);opacity:0}
+.leaf.out-prev{transform:rotateY(80deg) translateX(10%);opacity:0}
+.leaf.in-next{transform:rotateY(70deg) translateX(10%);opacity:0;transition:none}
+.leaf.in-prev{transform:rotateY(-70deg) translateX(-10%);opacity:0;transition:none}
+.pno{position:absolute;bottom:-14px;left:50%;transform:translateX(-50%);width:34px;height:34px;display:grid;place-items:center;font-weight:700;font-size:14px;color:var(--green)}
+.pno::before,.pno::after{content:"";position:absolute;inset:4px;background:var(--paper);border:1.5px solid var(--gold);z-index:-1}
+.pno::after{transform:rotate(45deg)}
+.pno{isolation:isolate}
+.loading{position:absolute;inset:0;display:grid;place-items:center;color:var(--muted);font-size:14px;pointer-events:none}
+
+/* notes */
+.notes{margin-top:28px;background:var(--card);border-radius:12px;border:1px solid rgba(196,154,62,.45);overflow:hidden}
+.notes summary{list-style:none;display:flex;align-items:center;gap:8px;padding:12px 14px;font-weight:700;font-size:16px;color:var(--maroon);cursor:pointer}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .notes summary{color:var(--gold2)}}
+.notes summary::-webkit-details-marker{display:none}
+.notes summary .chev{margin-inline-start:auto;transition:transform .2s}
+.notes[open] summary .chev{transform:rotate(180deg)}
+.nbody{padding:2px 16px 16px;font-size:17px;line-height:1.85;text-align:justify}
+.nbody p{margin-bottom:.25em}
+.nbody p.h{display:inline-block;margin:.5em 0 .15em;padding:0 10px;border-radius:6px;background:var(--maroon);color:#fff;font-weight:700;font-size:.9em}
+.nbody p.h *{color:#fff!important}
+.nbody .red{color:var(--maroon);font-weight:700}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .nbody .red{color:#e8a39a}}
+.nbody .ay{font-family:"Amiri Quran",Amiri,serif;color:var(--green2)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .nbody .ay{color:var(--gold2)}}
+
+/* player */
+.player{position:fixed;left:0;right:0;bottom:0;z-index:30;padding:10px 14px calc(env(safe-area-inset-bottom) + 10px);
+  background:var(--green);color:#fff;box-shadow:0 -4px 18px rgba(0,0,0,.25)}
+.player .wrap{max-width:620px;margin:0 auto}
+.bar{height:5px;border-radius:5px;background:rgba(255,255,255,.18);overflow:hidden;cursor:pointer;direction:ltr}
+.bar i{display:block;height:100%;width:0;background:var(--gold2);transform-origin:right}
+.times{display:flex;justify-content:space-between;font-size:12px;color:rgba(255,255,255,.7);margin-top:3px;direction:ltr}
+.ctrls{display:flex;align-items:center;justify-content:center;gap:18px;margin-top:2px}
+.ctrls .nav{width:44px;height:44px;border-radius:50%;display:grid;place-items:center;background:rgba(255,255,255,.08)}
+.ctrls .nav svg{width:22px;height:22px;fill:#fff}
+.play{width:62px;height:62px;border-radius:50%;display:grid;place-items:center;background:var(--gold);box-shadow:0 0 0 4px rgba(230,201,127,.25)}
+.play svg{width:28px;height:28px;fill:var(--green)}
+.auto{position:absolute;display:flex;align-items:center;gap:6px;font-size:13px;color:rgba(255,255,255,.85)}
+.ctrls{position:relative}
+.auto.l{left:0}.auto.r{right:0}
+.sw{width:36px;height:20px;border-radius:20px;background:rgba(255,255,255,.25);position:relative;transition:.2s}
+.sw::after{content:"";position:absolute;top:2px;right:2px;width:16px;height:16px;border-radius:50%;background:#fff;transition:.2s}
+.sw.on{background:var(--gold)}.sw.on::after{right:18px}
+.status{text-align:center;font-size:13px;color:var(--gold2);min-height:18px;margin-top:2px}
+.status a{color:#fff}
+
+/* sheets */
+.scrim{position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:40;opacity:0;pointer-events:none;transition:.25s}
+.scrim.show{opacity:1;pointer-events:auto}
+.sheet{position:fixed;left:0;right:0;bottom:0;z-index:50;max-height:86vh;overflow:auto;background:var(--card);color:var(--ink);
+  border-radius:18px 18px 0 0;transform:translateY(105%);transition:transform .3s cubic-bezier(.3,.7,.3,1);padding:0 16px calc(env(safe-area-inset-bottom) + 20px)}
+.sheet.show{transform:none}
+.sheet .grab{position:sticky;top:0;background:var(--card);padding:10px 0 8px;z-index:1}
+.sheet .grab::before{content:"";display:block;width:44px;height:5px;border-radius:5px;background:rgba(127,110,80,.35);margin:0 auto 10px}
+.sheet .x{position:absolute;left:0;top:14px;width:34px;height:34px;border-radius:50%;background:var(--paper2);color:#3a3326;font-size:16px}
+.sheet h2{font-size:20px;color:var(--green);text-align:center}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .sheet .x{position:absolute;left:0;top:14px;width:34px;height:34px;border-radius:50%;background:var(--paper2);color:#3a3326;font-size:16px}
+.sheet h2{color:var(--gold2)}}
+.qari{margin-top:14px}
+.qari h3{font-size:14px;color:var(--muted);margin-bottom:6px;display:flex;align-items:center;gap:8px}
+.qari h3::after{content:"";flex:1;height:1px;background:rgba(196,154,62,.4)}
+.rgrid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.rbtn{padding:11px 10px;border-radius:12px;border:1.5px solid rgba(196,154,62,.5);background:var(--paper);color:#1d1a14;font-size:17px;font-weight:700;
+  display:flex;align-items:center;justify-content:space-between}
+.rbtn small{font-size:11px;font-weight:400;color:#8a7e66}
+.rbtn.cur{background:var(--green);color:#fff;border-color:var(--green)}.rbtn.cur small{color:var(--gold2)}
+.rbtn.soon{opacity:.55}
+.jump{display:flex;gap:8px;margin:10px 0 6px}
+.jump input{flex:1;font:inherit;font-size:20px;padding:10px 12px;border-radius:12px;border:1.5px solid rgba(196,154,62,.6);background:var(--paper);color:#1d1a14;text-align:center}
+.jump button{padding:0 20px;border-radius:12px;background:var(--green);color:#fff;font-size:17px;font-weight:700}
+.tabs{display:flex;gap:6px;margin:12px 0 8px}
+.tabs button{flex:1;padding:8px;border-radius:10px;background:var(--paper2);color:#3a3326;font-weight:700;font-size:15px}
+.tabs button.on{background:var(--maroon);color:#fff}
+.list{display:grid;grid-template-columns:1fr;gap:4px}
+.list button{display:flex;align-items:center;gap:10px;padding:9px 6px;border-bottom:1px solid rgba(196,154,62,.25);font-size:17px;text-align:right}
+.list .n{width:30px;height:30px;flex:none;display:grid;place-items:center;font-size:12px;color:var(--green);position:relative;isolation:isolate;font-weight:700}
+.list .n::before{content:"";position:absolute;inset:4px;border:1.2px solid var(--gold);transform:rotate(45deg);z-index:-1}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .list .n{color:var(--gold2)}}
+.list .pg{margin-inline-start:auto;font-size:13px;color:var(--muted)}
+.jgrid{display:grid;grid-template-columns:repeat(5,1fr);gap:6px}
+.jgrid button{padding:10px 0;border-radius:10px;background:var(--paper);border:1px solid rgba(196,154,62,.45);font-weight:700;color:#1d1a14}
+
+/* welcome */
+.welcome{text-align:center;padding:10px 6px 0}
+.welcome .orn{height:10px;border-radius:4px;margin:6px auto 14px;width:120px}
+.welcome h1{font-size:28px;color:var(--green);line-height:1.3}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .welcome h1{color:var(--gold2)}}
+.welcome p{color:var(--muted);font-size:16px;margin-top:6px}
+.toast{position:fixed;top:70px;left:50%;transform:translateX(-50%) translateY(-20px);background:var(--maroon);color:#fff;padding:8px 16px;border-radius:999px;font-size:14px;z-index:60;opacity:0;transition:.3s;pointer-events:none;white-space:nowrap}
+.toast.show{opacity:1;transform:translateX(-50%)}
+.fallback{width:100%;height:80px;border:0;border-radius:8px;margin-top:6px;background:#fff}
+</style>
+</head>
+<body>
+<header class="top">
+  <div class="brand">مصحف القراءات<small>الروايات العشرون</small></div>
+  <div class="sp"></div>
+  <button class="chip" id="riwBtn" aria-label="اختيار الرواية"><span class="dot"></span><span id="riwName">اختر الرواية</span></button>
+  <button class="icon-btn" id="goBtn" aria-label="الانتقال إلى صفحة"><svg viewBox="0 0 24 24"><path d="M3 5h18v2H3zm0 6h18v2H3zm0 6h12v2H3z"/></svg></button>
+</header>
+
+<main>
+  <div class="meta"><span class="sura" id="mSura"></span><span id="mJuz"></span></div>
+  <div class="stage" id="stage">
+    <div class="leaf star-bg" id="leaf">
+      <div class="inner"><img id="pimg" alt=""><div class="loading" id="loading">جارٍ التحميل…</div></div>
+      <div class="pno" id="pno"></div>
+    </div>
+  </div>
+  <details class="notes" id="notes" hidden>
+    <summary><span>هوامش القراءات لهذه الصفحة</span><svg class="chev" width="18" height="18" viewBox="0 0 24 24"><path fill="currentColor" d="M7 10l5 5 5-5z"/></svg></summary>
+    <div class="nbody" id="nbody"></div>
+  </details>
+</main>
+
+<footer class="player">
+  <div class="wrap">
+    <div class="bar" id="bar"><i id="barFill"></i></div>
+    <div class="times"><span id="tCur">0:00</span><span id="tDur">0:00</span></div>
+    <div class="ctrls">
+      <button class="auto r" id="autoBtn" aria-label="التشغيل المتواصل"><span class="sw on" id="autoSw"></span><span>متواصل</span></button>
+      <button class="nav" id="prevBtn" aria-label="الصفحة السابقة"><svg viewBox="0 0 24 24"><path d="M8.6 7.4 10 6l6 6-6 6-1.4-1.4 4.6-4.6z"/></svg></button>
+      <button class="play" id="playBtn" aria-label="تشغيل"><svg viewBox="0 0 24 24" id="playIco"><path d="M8 5v14l11-7z"/></svg></button>
+      <button class="nav" id="nextBtn" aria-label="الصفحة التالية"><svg viewBox="0 0 24 24"><path d="M15.4 7.4 14 6l-6 6 6 6 1.4-1.4L10.8 12z"/></svg></button>
+      <button class="auto l" id="themeBtn" aria-label="الوضع الليلي"><span>☾</span></button>
+    </div>
+    <div class="status" id="status"></div>
+  </div>
+</footer>
+
+<div class="scrim" id="scrim"></div>
+<section class="sheet" id="riwSheet" aria-label="الروايات">
+  <div class="grab"><button class="x" data-close aria-label="إغلاق">✕</button><h2>اختر الرواية</h2></div>
+  <div id="riwList"></div>
+</section>
+<section class="sheet" id="goSheet" aria-label="الانتقال">
+  <div class="grab"><button class="x" data-close aria-label="إغلاق">✕</button><h2>انتقل إلى</h2></div>
+  <form class="jump" id="jumpForm"><input id="jumpIn" type="number" inputmode="numeric" min="1" max="604" placeholder="رقم الصفحة ١ – ٦٠٤"><button>اذهب</button></form>
+  <div class="tabs"><button class="on" data-t="s">السور</button><button data-t="j">الأجزاء</button></div>
+  <div id="goList"></div>
+</section>
+<div class="toast" id="toast"></div>
+<audio id="aud" preload="auto"></audio>
+
+<script>
+(()=>{
+const $=id=>document.getElementById(id);
+const AR=n=>String(n).replace(/\d/g,d=>'٠١٢٣٤٥٦٧٨٩'[d]);
+const fmt=t=>{if(!isFinite(t))return '0:00';t=Math.floor(t);return Math.floor(t/60)+':'+String(t%60).padStart(2,'0')};
+const store={get(k){try{return localStorage.getItem(k)}catch(e){return null}},set(k,v){try{localStorage.setItem(k,v)}catch(e){}}};
+let D,N={},R=null,P=1,auto=true,wantPlay=false,busy=false;
+const aud=$('aud');
+
+const ICON_PLAY='<path d="M8 5v14l11-7z"/>';
+const ICON_PAUSE='<path d="M6 5h4v14H6zm8 0h4v14h-4z"/>';
+
+function toast(m){const t=$('toast');t.textContent=m;t.classList.add('show');clearTimeout(t._h);t._h=setTimeout(()=>t.classList.remove('show'),2200)}
+function audioUrl(r,p){
+  if(!r||!r.audio) return null;
+  if(r.audio.type==='drive'){const id=r.audio.ids[String(p)];return id?'https://drive.google.com/uc?export=download&id='+id:null}
+  if(r.audio.type==='url') return r.audio.pattern.replace('{p3}',String(p).padStart(3,'0')).replace('{p}',p);
+  return null;
+}
+function driveView(r,p){return r&&r.audio&&r.audio.type==='drive'&&r.audio.ids[String(p)]?'https://drive.google.com/file/d/'+r.audio.ids[String(p)]+'/view':null}
+function imgUrl(p){const m=(R&&R.mushaf)||'hafs';return 'pages/'+m+'/'+String(p).padStart(3,'0')+'.png'}
+
+function syncUrl(){const u=new URL(location.href);u.searchParams.set('p',P);if(R)u.searchParams.set('r',R.id);history.replaceState(null,'',u);store.set('last',JSON.stringify({p:P,r:R&&R.id}))}
+
+function renderMeta(){
+  const [s,j]=D.pages[P-1];const sura=D.suras[s-1][2];
+  $('mSura').textContent='سورة '+sura;$('mJuz').textContent='الجزء '+AR(j)+' · صفحة '+AR(P);
+  $('pno').textContent=AR(P);
+  const n=N[String(P)];$('notes').hidden=!n;if(n)$('nbody').innerHTML=n;
+  document.title='صفحة '+AR(P)+' – سورة '+sura+(R?' – رواية '+R.name:'')+' | مصحف القراءات';
+}
+function setPlayIcon(){$('playIco').innerHTML=aud.paused?ICON_PLAY:ICON_PAUSE;$('playBtn').setAttribute('aria-label',aud.paused?'تشغيل':'إيقاف')}
+
+function loadAudio(play){
+  const url=audioUrl(R,P);
+  $('status').innerHTML='';
+  if(!R){aud.removeAttribute('src');$('status').textContent='اختر رواية للاستماع';return}
+  if(!url){aud.removeAttribute('src');aud.load();$('status').textContent='تلاوة رواية '+R.name+' لهذه الصفحة غير متوفرة بعد';setPlayIcon();return}
+  if(aud.dataset.src!==url){aud.dataset.src=url;aud.src=url;aud.load()}
+  if(play){aud.play().catch(()=>{setPlayIcon()})}
+  if('mediaSession' in navigator){
+    navigator.mediaSession.metadata=new MediaMetadata({title:'صفحة '+P+' – سورة '+D.suras[D.pages[P-1][0]-1][2],artist:'رواية '+R.name,album:'مصحف القراءات'});
+  }
+  // warm up next page image
+  if(P<604){const i=new Image();i.src=imgUrl(P+1)}
+}
+
+function show(p,dir,play){
+  p=Math.max(1,Math.min(604,p|0));
+  if(p===P&&$('pimg').getAttribute('src'))return;
+  const leaf=$('leaf');P=p;
+  const swap=()=>{
+    $('loading').style.display='grid';
+    const img=$('pimg');img.onload=()=>{$('loading').style.display='none'};img.src=imgUrl(P);
+    renderMeta();syncUrl();loadAudio(play);
+  };
+  if(!dir||matchMedia('(prefers-reduced-motion: reduce)').matches){swap();return}
+  leaf.classList.add(dir>0?'out-next':'out-prev');
+  setTimeout(()=>{leaf.classList.remove('out-next','out-prev');leaf.classList.add(dir>0?'in-next':'in-prev');swap();
+    void leaf.offsetWidth;leaf.classList.remove('in-next','in-prev')},260);
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+
+function setRiwaya(id,quiet){
+  const r=D.riwayat.find(x=>x.id===id);if(!r)return;
+  if(!r.audio&&!quiet){toast('رواية '+r.name+' ستُضاف قريبًا بإذن الله');return}
+  const was=!aud.paused;R=r;$('riwName').textContent='رواية '+r.name;
+  aud.dataset.src='';closeSheets();renderRiw();renderMeta();syncUrl();loadAudio(was||!quiet);
+}
+
+/* sheets */
+function openSheet(id){$('scrim').classList.add('show');$(id).classList.add('show')}
+function closeSheets(){$('scrim').classList.remove('show');document.querySelectorAll('.sheet').forEach(s=>s.classList.remove('show'))}
+function renderRiw(){
+  const by={};D.riwayat.forEach(r=>(by[r.qari]=by[r.qari]||[]).push(r));
+  $('riwList').innerHTML=Object.entries(by).map(([q,rs])=>`<div class="qari"><h3>قراءة ${q}</h3><div class="rgrid">${rs.map(r=>
+    `<button class="rbtn${R&&R.id===r.id?' cur':''}${r.audio?'':' soon'}" data-r="${r.id}"><span>${r.name}</span><small>${r.audio?(R&&R.id===r.id?'تُسمع الآن':'متاحة'):'قريبًا'}</small></button>`).join('')}</div></div>`).join('');
+}
+function renderGo(t){
+  document.querySelectorAll('.tabs button').forEach(b=>b.classList.toggle('on',b.dataset.t===t));
+  if(t==='s') $('goList').innerHTML='<div class="list">'+D.suras.map(([n,p,name])=>`<button data-p="${p}"><span class="n">${AR(n)}</span><span>${name}</span><span class="pg">ص ${AR(p)}</span></button>`).join('')+'</div>';
+  else{const first={};D.pages.forEach(([s,j],i)=>{if(!first[j])first[j]=i+1});
+    $('goList').innerHTML='<div class="jgrid">'+Object.entries(first).map(([j,p])=>`<button data-p="${p}">${AR(j)}</button>`).join('')+'</div>'}
+}
+
+/* wiring */
+$('riwBtn').onclick=()=>{renderRiw();openSheet('riwSheet')};
+$('goBtn').onclick=()=>{renderGo('s');openSheet('goSheet');};
+$('scrim').onclick=closeSheets;document.querySelectorAll('[data-close]').forEach(b=>b.onclick=closeSheets);
+$('riwList').onclick=e=>{const b=e.target.closest('[data-r]');if(b)setRiwaya(b.dataset.r)};
+$('goList').onclick=e=>{const b=e.target.closest('[data-p]');if(b){closeSheets();show(+b.dataset.p,+b.dataset.p>P?1:-1,!aud.paused)}};
+document.querySelector('.tabs').onclick=e=>{const b=e.target.closest('[data-t]');if(b)renderGo(b.dataset.t)};
+$('jumpForm').onsubmit=e=>{e.preventDefault();const v=+$('jumpIn').value;if(v>=1&&v<=604){closeSheets();show(v,v>P?1:-1,!aud.paused)}else toast('أدخل رقمًا من ١ إلى ٦٠٤')};
+$('nextBtn').onclick=()=>show(P+1,1,!aud.paused);
+$('prevBtn').onclick=()=>show(P-1,-1,!aud.paused);
+$('playBtn').onclick=()=>{
+  if(!R){renderRiw();openSheet('riwSheet');return}
+  if(!aud.getAttribute('src')){loadAudio(false);if(!aud.getAttribute('src'))return}
+  aud.paused?aud.play().catch(err=>failed()):aud.pause();
+};
+$('autoBtn').onclick=()=>{auto=!auto;$('autoSw').classList.toggle('on',auto);store.set('auto',auto?'1':'0');toast(auto?'التشغيل المتواصل مفعّل':'التشغيل المتواصل متوقف')};
+$('themeBtn').onclick=()=>{const d=document.documentElement;const cur=d.dataset.theme||(matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light');
+  d.dataset.theme=cur==='dark'?'light':'dark';store.set('theme',d.dataset.theme)};
+$('bar').onclick=e=>{if(!aud.duration)return;const r=e.currentTarget.getBoundingClientRect();aud.currentTime=(e.clientX-r.left)/r.width*aud.duration};
+
+aud.addEventListener('play',setPlayIcon);aud.addEventListener('pause',setPlayIcon);
+aud.addEventListener('timeupdate',()=>{$('tCur').textContent=fmt(aud.currentTime);$('tDur').textContent=fmt(aud.duration);
+  $('barFill').style.width=(aud.duration?aud.currentTime/aud.duration*100:0)+'%'});
+aud.addEventListener('waiting',()=>{$('status').textContent='جارٍ تحميل التلاوة…'});
+aud.addEventListener('playing',()=>{$('status').textContent='رواية '+R.name+' · صفحة '+AR(P)});
+aud.addEventListener('ended',()=>{if(auto&&P<604)show(P+1,1,true);else setPlayIcon()});
+function failed(){
+  const v=driveView(R,P);
+  $('status').innerHTML='تعذّر التشغيل داخل الموقع'+(v?` – <a href="${v}" target="_blank" rel="noopener">افتح التلاوة في Drive</a>`:'');
+  setPlayIcon();
+}
+aud.addEventListener('error',()=>{if(aud.getAttribute('src'))failed()});
+
+if('mediaSession' in navigator){
+  navigator.mediaSession.setActionHandler('nexttrack',()=>show(P+1,1,true));
+  navigator.mediaSession.setActionHandler('previoustrack',()=>show(P-1,-1,true));
+}
+// swipe: finger moving right = next page (as turning an Arabic mushaf)
+let sx=null,sy=0;
+$('stage').addEventListener('touchstart',e=>{sx=e.touches[0].clientX;sy=e.touches[0].clientY},{passive:true});
+$('stage').addEventListener('touchend',e=>{if(sx===null)return;const dx=e.changedTouches[0].clientX-sx,dy=e.changedTouches[0].clientY-sy;sx=null;
+  if(Math.abs(dx)>60&&Math.abs(dx)>Math.abs(dy)*1.5)show(P+(dx>0?1:-1),dx>0?1:-1,!aud.paused)},{passive:true});
+document.addEventListener('keydown',e=>{if(e.target.tagName==='INPUT')return;
+  if(e.key==='ArrowLeft')show(P+1,1,!aud.paused);if(e.key==='ArrowRight')show(P-1,-1,!aud.paused);if(e.key===' '){e.preventDefault();$('playBtn').click()}});
+
+/* boot */
+const th=store.get('theme');if(th)document.documentElement.dataset.theme=th;
+auto=store.get('auto')!=='0';$('autoSw').classList.toggle('on',auto);
+Promise.all([fetch('data.json').then(r=>r.json()),fetch('notes.json').then(r=>r.json()).catch(()=>({}))]).then(([d,n])=>{
+  D=d;N=n;
+  const q=new URLSearchParams(location.search);let last={};try{last=JSON.parse(store.get('last')||'{}')}catch(e){}
+  const rid=q.get('r')||last.r||(D.riwayat.find(r=>r.audio)||{}).id;
+  P=0;
+  if(rid){const r=D.riwayat.find(x=>x.id===rid);if(r){R=r;$('riwName').textContent='رواية '+r.name}}
+  show(+(q.get('p')||last.p||1)||1,0,false);
+  setPlayIcon();
+  if(!q.get('p')&&!last.p)toast('اضغط ▶ للاستماع، واسحب الصفحة للتقليب');
+});
+})();
+</script>
+</body>
+</html>

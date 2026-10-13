@@ -207,7 +207,8 @@ const ICON_PAUSE='<path d="M6 5h4v14H6zm8 0h4v14h-4z"/>';
 function toast(m){const t=$('toast');t.textContent=m;t.classList.add('show');clearTimeout(t._h);t._h=setTimeout(()=>t.classList.remove('show'),2200)}
 function audioUrl(r,p){
   if(!r||!r.audio) return null;
-  if(r.audio.type==='drive'){const id=r.audio.ids[String(p)];return id?'https://drive.google.com/uc?export=download&id='+id:null}
+  if(r.audio.base&&p<=(r.audio.local||604)) return r.audio.base+String(p).padStart(3,'0')+'.mp3';
+  if(r.audio.type==='drive') return null;
   if(r.audio.type==='url') return r.audio.pattern.replace('{p3}',String(p).padStart(3,'0')).replace('{p}',p);
   return null;
 }
@@ -229,7 +230,8 @@ function loadAudio(play){
   const url=audioUrl(R,P);
   $('status').innerHTML='';
   if(!R){aud.removeAttribute('src');$('status').textContent='اختر رواية للاستماع';return}
-  if(!url){aud.removeAttribute('src');aud.load();$('status').textContent='تلاوة رواية '+R.name+' لهذه الصفحة غير متوفرة بعد';setPlayIcon();return}
+  if(!url){aud.removeAttribute('src');aud.load();const v=driveView(R,P);
+    $('status').innerHTML=v?`هذه الصفحة تُسمع حاليًا من Drive – <a href="${v}" target="_blank" rel="noopener">افتح التلاوة</a>`:'تلاوة رواية '+R.name+' لهذه الصفحة غير متوفرة بعد';setPlayIcon();return}
   if(aud.dataset.src!==url){aud.dataset.src=url;aud.src=url;aud.load()}
   if(play){aud.play().catch(()=>{setPlayIcon()})}
   if('mediaSession' in navigator){

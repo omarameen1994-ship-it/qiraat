@@ -231,7 +231,7 @@ function loadAudio(play){
   $('status').innerHTML='';
   if(!R){aud.removeAttribute('src');$('status').textContent='اختر رواية للاستماع';return}
   if(!url){aud.removeAttribute('src');aud.load();const v=driveView(R,P);
-    $('status').innerHTML=v?`هذه الصفحة تُسمع حاليًا من Drive – <a href="${v}" target="_blank" rel="noopener">افتح التلاوة</a>`:'تلاوة رواية '+R.name+' لهذه الصفحة غير متوفرة بعد';setPlayIcon();return}
+    $('status').innerHTML=v?`هذه الصفحة تُسمع حاليًا من Drive – <a href="${v}" target="_blank" rel="noopener">افتح التلاوة</a>`:'تلاوة رواية '+R.name+(R.audio&&R.audio.local?' متاحة حاليًا للصفحات ١–'+AR(R.audio.local):' لهذه الصفحة غير متوفرة بعد');setPlayIcon();return}
   if(aud.dataset.src!==url){aud.dataset.src=url;aud.src=url;aud.load()}
   if(play){aud.play().catch(()=>{setPlayIcon()})}
   if('mediaSession' in navigator){
@@ -330,7 +330,7 @@ auto=store.get('auto')!=='0';$('autoSw').classList.toggle('on',auto);
 Promise.all([fetch('data.json',{cache:'no-cache'}).then(r=>r.json()),fetch('notes.json',{cache:'no-cache'}).then(r=>r.json()).catch(()=>({}))]).then(([d,n])=>{
   D=d;N=n;
   const q=new URLSearchParams(location.search);let last={};try{last=JSON.parse(store.get('last')||'{}')}catch(e){}
-  const rid=q.get('r')||last.r||(D.riwayat.find(r=>r.audio)||{}).id;
+  const rid=q.get('r')||last.r||((D.riwayat.find(r=>r.id==='hafs'&&r.audio)||D.riwayat.find(r=>r.audio)||{}).id);
   P=0;
   if(rid){const r=D.riwayat.find(x=>x.id===rid);if(r){R=r;$('riwName').textContent='رواية '+r.name}}
   show(+(q.get('p')||last.p||1)||1,0,false);

@@ -55,6 +55,7 @@ main{max-width:620px;margin:0 auto;padding:14px 12px 150px}
 .pno::before,.pno::after{content:"";position:absolute;inset:4px;background:var(--paper);border:1.5px solid var(--gold);z-index:-1}
 .pno::after{transform:rotate(45deg)}
 .pno{isolation:isolate}
+.mnote{text-align:center;font-size:12px;color:#8a6a1f;margin:22px 12px -6px;line-height:1.6}
 .loading{position:absolute;inset:0;display:grid;place-items:center;color:var(--muted);font-size:14px;pointer-events:none}
 
 /* notes */
@@ -157,6 +158,7 @@ main{max-width:620px;margin:0 auto;padding:14px 12px 150px}
       <div class="pno" id="pno"></div>
     </div>
   </div>
+  <div class="mnote" id="mnote" hidden></div>
   <details class="notes" id="notes" hidden>
     <summary><span>هوامش القراءات لهذه الصفحة</span><svg class="chev" width="18" height="18" viewBox="0 0 24 24"><path fill="currentColor" d="M7 10l5 5 5-5z"/></svg></summary>
     <div class="nbody" id="nbody"></div>
@@ -213,7 +215,11 @@ function audioUrl(r,p){
   return null;
 }
 function driveView(r,p){return r&&r.audio&&r.audio.type==='drive'&&r.audio.ids[String(p)]?'https://drive.google.com/file/d/'+r.audio.ids[String(p)]+'/view':null}
-function imgUrl(p){const m=(R&&R.mushaf)||'hafs';return 'pages/'+m+'/'+String(p).padStart(3,'0')+'.png'}
+function ownImg(p){return !!(R&&R.mushaf&&R.mushaf!=='hafs'&&p<=(R.mpages||604))}
+function imgUrl(p){const m=ownImg(p)?R.mushaf:'hafs';return 'pages/'+m+'/'+String(p).padStart(3,'0')+'.png'}
+function renderMnote(){const el=$('mnote');if(!el)return;const fb=R&&R.id!=='hafs'&&!ownImg(P);
+  el.hidden=!fb;if(fb)el.textContent=R.mushaf&&R.mushaf!=='hafs'?'صورة هذه الصفحة من مصحف حفص؛ صفحات مصحف رواية '+R.name+' متاحة حاليًا للصفحات ١–'+AR(R.mpages):'صورة الصفحة من مصحف حفص، ومصحف رواية '+R.name+' سيُضاف بإذن الله'}
+function loadImg(){$('loading').style.display='grid';const img=$('pimg');img.onload=()=>{$('loading').style.display='none'};img.src=imgUrl(P);renderMnote()}
 
 function syncUrl(){const u=new URL(location.href);u.searchParams.set('p',P);if(R)u.searchParams.set('r',R.id);history.replaceState(null,'',u);store.set('last',JSON.stringify({p:P,r:R&&R.id}))}
 
@@ -246,8 +252,7 @@ function show(p,dir,play){
   if(p===P&&$('pimg').getAttribute('src'))return;
   const leaf=$('leaf');P=p;
   const swap=()=>{
-    $('loading').style.display='grid';
-    const img=$('pimg');img.onload=()=>{$('loading').style.display='none'};img.src=imgUrl(P);
+    loadImg();
     renderMeta();syncUrl();loadAudio(play);
   };
   if(!dir||matchMedia('(prefers-reduced-motion: reduce)').matches){swap();return}
@@ -259,8 +264,9 @@ function show(p,dir,play){
 
 function setRiwaya(id,quiet){
   const r=D.riwayat.find(x=>x.id===id);if(!r)return;
-  if(!r.audio&&!quiet){toast('رواية '+r.name+' ستُضاف قريبًا بإذن الله');return}
-  const was=!aud.paused;R=r;$('riwName').textContent='رواية '+r.name;
+  if(!r.audio&&!r.mpages&&!quiet){toast('رواية '+r.name+' ستُضاف قريبًا بإذن الله');return}
+  const was=!aud.paused,old=R&&R.id;R=r;$('riwName').textContent='رواية '+r.name;
+  if(old!==r.id&&$('pimg').getAttribute('src'))loadImg();
   aud.dataset.src='';closeSheets();renderRiw();renderMeta();syncUrl();loadAudio(was||!quiet);
 }
 
@@ -270,7 +276,7 @@ function closeSheets(){$('scrim').classList.remove('show');document.querySelecto
 function renderRiw(){
   const by={};D.riwayat.forEach(r=>(by[r.qari]=by[r.qari]||[]).push(r));
   $('riwList').innerHTML=Object.entries(by).map(([q,rs])=>`<div class="qari"><h3>قراءة ${q}</h3><div class="rgrid">${rs.map(r=>
-    `<button class="rbtn${R&&R.id===r.id?' cur':''}${r.audio?'':' soon'}" data-r="${r.id}"><span>${r.name}</span><small>${r.audio?(R&&R.id===r.id?'تُسمع الآن':'متاحة'):'قريبًا'}</small></button>`).join('')}</div></div>`).join('');
+    `<button class="rbtn${R&&R.id===r.id?' cur':''}${r.audio||r.mpages?'':' soon'}" data-r="${r.id}"><span>${r.name}</span><small>${R&&R.id===r.id?'مختارة الآن':r.audio?'متاحة':r.mpages?'المصحف فقط':'قريبًا'}</small></button>`).join('')}</div></div>`).join('');
 }
 function renderGo(t){
   document.querySelectorAll('.tabs button').forEach(b=>b.classList.toggle('on',b.dataset.t===t));

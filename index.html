@@ -4,6 +4,13 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#1f4a39">
+<link rel="manifest" href="manifest.json">
+<link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="مصحف القراءات">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <title>مصحف القراءات</title>
 <meta name="description" content="استمع إلى المصحف الشريف بالروايات العشرين صفحةً صفحة، مع هوامش القراءات العشر.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -336,7 +343,7 @@ auto=store.get('auto')!=='0';$('autoSw').classList.toggle('on',auto);
 Promise.all([fetch('data.json',{cache:'no-cache'}).then(r=>r.json()),fetch('notes.json',{cache:'no-cache'}).then(r=>r.json()).catch(()=>({}))]).then(([d,n])=>{
   D=d;N=n;
   const q=new URLSearchParams(location.search);let last={};try{last=JSON.parse(store.get('last')||'{}')}catch(e){}
-  const rid=q.get('r')||last.r||((D.riwayat.find(r=>r.id==='hafs'&&r.audio)||D.riwayat.find(r=>r.audio)||{}).id);
+  const rid=q.get('r')||'hafs';   // the plain link always opens on Hafs; printed QR codes carry their own riwaya
   P=0;
   if(rid){const r=D.riwayat.find(x=>x.id===rid);if(r){R=r;$('riwName').textContent='رواية '+r.name}}
   show(+(q.get('p')||last.p||1)||1,0,false);

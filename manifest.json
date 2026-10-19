@@ -1,0 +1,30 @@
+{
+ "name": "مصحف القراءات العشر",
+ "short_name": "مصحف القراءات",
+ "lang": "ar",
+ "dir": "rtl",
+ "start_url": "./?r=hafs",
+ "scope": "./",
+ "display": "standalone",
+ "orientation": "portrait",
+ "background_color": "#1f4a39",
+ "theme_color": "#1f4a39",
+ "icons": [
+  {
+   "src": "icons/icon-192.png",
+   "sizes": "192x192",
+   "type": "image/png"
+  },
+  {
+   "src": "icons/icon-512.png",
+   "sizes": "512x512",
+   "type": "image/png"
+  },
+  {
+   "src": "icons/maskable-512.png",
+   "sizes": "512x512",
+   "type": "image/png",
+   "purpose": "maskable"
+  }
+ ]
+}

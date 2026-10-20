@@ -5,13 +5,13 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#1f4a39">
 <link rel="manifest" href="manifest.json">
-<link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png">
+<link rel="icon" type="image/png" sizes="64x64" href="icons/favicon-64.png">
 <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-title" content="مصحف القراءات">
+<meta name="apple-mobile-web-app-title" content="مصحف الأمة">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<title>مصحف القراءات</title>
+<title>مصحف الأمة</title>
 <meta name="description" content="استمع إلى المصحف الشريف بالروايات العشرين صفحةً صفحة، مع هوامش القراءات العشر.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -35,7 +35,7 @@ button{font-family:inherit;cursor:pointer;border:none;background:none;color:inhe
 /* top bar */
 .top{position:sticky;top:0;z-index:20;display:flex;align-items:center;gap:8px;padding:calc(env(safe-area-inset-top) + 8px) 12px 8px;
   background:var(--green);color:#fff;box-shadow:0 2px 10px rgba(0,0,0,.2)}
-.brand{font-weight:700;font-size:18px;white-space:nowrap}
+.brand{font-weight:700;font-size:18px;white-space:nowrap;line-height:1.25}
 .brand small{display:block;font-size:11px;font-weight:400;color:var(--gold2);margin-top:-3px}
 .top .sp{flex:1}
 .chip{display:flex;align-items:center;gap:6px;padding:6px 12px;border-radius:999px;background:rgba(255,255,255,.12);border:1px solid rgba(230,201,127,.5);
@@ -152,6 +152,8 @@ main{max-width:620px;margin:0 auto;padding:14px 12px 150px}
 .splash{position:fixed;inset:0;z-index:100;background:radial-gradient(circle at 50% 35%,#2c6650,#1f4a39 70%);display:grid;place-items:center;padding:22px;transition:opacity .6s ease}
 .splash.hide{opacity:0;pointer-events:none}
 .sp-card{width:min(420px,100%);border:2px solid var(--gold);outline:1px solid var(--gold);outline-offset:6px;border-radius:14px;padding:34px 22px 26px;text-align:center;color:#fff}
+.sp-logo{width:132px;height:132px;display:block;margin:-6px auto 2px;filter:drop-shadow(0 4px 14px rgba(0,0,0,.35))}
+.brand-logo{width:30px;height:30px;vertical-align:middle;margin-left:8px;float:right;margin-top:2px}
 .sp-orn{color:var(--gold2);font-size:22px;letter-spacing:6px}
 .sp-t1{font-size:26px;font-weight:700;color:var(--gold2);margin:12px 0 18px;line-height:1.5}
 .sp-lbl{font-size:15px;color:#e9dfc2;line-height:1.6}
@@ -165,7 +167,7 @@ main{max-width:620px;margin:0 auto;padding:14px 12px 150px}
 <body>
 <div class="splash" id="splash" role="dialog" aria-label="افتتاحية المصحف">
   <div class="sp-card">
-    <div class="sp-orn">۞ ۞ ۞</div>
+    <img class="sp-logo" src="icons/logo-240.png" alt="مصحف الأمة">
     <div class="sp-t1">الجمع الصوتي للقرآن الكريم</div>
     <div class="sp-lbl">بصوت فضيلة الشيخ</div>
     <div class="sp-name">أحمد عيسى المعصراوي</div>
@@ -180,7 +182,7 @@ function hide(){if(done)return;done=true;sp.classList.add('hide');setTimeout(()=
 sp.addEventListener('click',hide);setTimeout(hide,4000)})();</script>
 
 <header class="top">
-  <div class="brand">مصحف القراءات<small>الروايات العشرون</small></div>
+  <div class="brand"><img class="brand-logo" src="icons/favicon-64.png" alt="">مصحف الأمة<small>القراءات العشر · الروايات العشرون</small></div>
   <div class="sp"></div>
   <button class="chip" id="riwBtn" aria-label="اختيار الرواية"><span class="dot"></span><span id="riwName">اختر الرواية</span></button>
   <button class="icon-btn" id="goBtn" aria-label="الانتقال إلى صفحة"><svg viewBox="0 0 24 24"><path d="M3 5h18v2H3zm0 6h18v2H3zm0 6h12v2H3z"/></svg></button>
@@ -264,7 +266,7 @@ function renderMeta(){
   $('mSura').textContent='سورة '+sura;$('mJuz').textContent='الجزء '+AR(j)+' · صفحة '+AR(P);
   $('pno').textContent=AR(P);
   const n=N[String(P)];$('notes').hidden=!n;if(n)$('nbody').innerHTML=n;
-  document.title='صفحة '+AR(P)+' – سورة '+sura+(R?' – رواية '+R.name:'')+' | مصحف القراءات';
+  document.title='صفحة '+AR(P)+' – سورة '+sura+(R?' – رواية '+R.name:'')+' | مصحف الأمة';
 }
 function setPlayIcon(){$('playIco').innerHTML=aud.paused?ICON_PLAY:ICON_PAUSE;$('playBtn').setAttribute('aria-label',aud.paused?'تشغيل':'إيقاف')}
 
@@ -277,7 +279,7 @@ function loadAudio(play){
   if(aud.dataset.src!==url){aud.dataset.src=url;aud.src=url;aud.load()}
   if(play){aud.play().catch(()=>{setPlayIcon()})}
   if('mediaSession' in navigator){
-    navigator.mediaSession.metadata=new MediaMetadata({title:'صفحة '+P+' – سورة '+D.suras[D.pages[P-1][0]-1][2],artist:'رواية '+R.name,album:'مصحف القراءات'});
+    navigator.mediaSession.metadata=new MediaMetadata({title:'صفحة '+P+' – سورة '+D.suras[D.pages[P-1][0]-1][2],artist:'رواية '+R.name,album:'مصحف الأمة'});
   }
   // warm up next page image
   if(P<604){const i=new Image();i.src=imgUrl(P+1)}

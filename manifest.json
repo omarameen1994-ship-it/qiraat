@@ -1,13 +1,13 @@
 {
- "name": "مصحف القراءات العشر",
- "short_name": "مصحف القراءات",
+ "name": "مصحف الأمة - القراءات العشر",
+ "short_name": "مصحف الأمة",
  "lang": "ar",
  "dir": "rtl",
  "start_url": "./?r=hafs",
  "scope": "./",
  "display": "standalone",
  "orientation": "portrait",
- "background_color": "#1f4a39",
+ "background_color": "#14343a",
  "theme_color": "#1f4a39",
  "icons": [
   {

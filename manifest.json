@@ -3,7 +3,7 @@
  "short_name": "مصحف الأمة",
  "lang": "ar",
  "dir": "rtl",
- "start_url": "./?r=hafs",
+ "start_url": "./",
  "scope": "./",
  "display": "standalone",
  "orientation": "portrait",
@@ -26,5 +26,6 @@
    "type": "image/png",
    "purpose": "maskable"
   }
- ]
+ ],
+ "id": "./"
 }

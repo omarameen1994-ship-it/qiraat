@@ -144,6 +144,12 @@ main{max-width:620px;margin:0 auto;padding:14px 12px 150px}
 .welcome h1{font-size:28px;color:var(--green);line-height:1.3}
 @media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .welcome h1{color:var(--gold2)}}
 .welcome p{color:var(--muted);font-size:16px;margin-top:6px}
+.inst{position:fixed;left:12px;right:12px;bottom:calc(150px + env(safe-area-inset-bottom));z-index:61;background:var(--card);color:var(--ink);border:1.5px solid var(--gold);border-radius:14px;padding:10px 12px;display:flex;align-items:center;gap:10px;box-shadow:0 8px 24px rgba(0,0,0,.25);font-size:14px;line-height:1.5}
+.inst[hidden]{display:none}
+.inst img{width:40px;height:40px;border-radius:9px}
+.inst .t{flex:1}
+.inst .go{background:var(--green);color:#fff;border-radius:999px;padding:7px 14px;font-weight:700}
+.inst .x{font-size:20px;color:var(--muted);padding:0 4px}
 .toast{position:fixed;top:70px;left:50%;transform:translateX(-50%) translateY(-20px);background:var(--maroon);color:#fff;padding:8px 16px;border-radius:999px;font-size:14px;z-index:60;opacity:0;transition:.3s;pointer-events:none;white-space:nowrap}
 .toast.show{opacity:1;transform:translateX(-50%)}
 .fallback{width:100%;height:80px;border:0;border-radius:8px;margin-top:6px;background:#fff}
@@ -159,6 +165,10 @@ main{max-width:620px;margin:0 auto;padding:14px 12px 150px}
 .sp-lbl{font-size:15px;color:#e9dfc2;line-height:1.6}
 .sp-name{font-size:24px;font-weight:700;margin:2px 0 16px;line-height:1.5}
 .sp-name2{font-size:21px;font-weight:700;margin:2px 0 6px;line-height:1.5}
+.sp-pair{display:flex;align-items:stretch;justify-content:center;gap:14px;margin-top:6px}
+.sp-pair>div:not(.sp-sep){flex:1;display:flex;flex-direction:column;align-items:center}
+.sp-pair .sp-name2{font-size:19px;margin:0}
+.sp-sep{width:1px;background:var(--gold);opacity:.7}
 .sp-rule{width:120px;height:1px;background:var(--gold);margin:4px auto 16px;opacity:.8}
 .sp-skip{margin-top:22px;font-size:13px;color:var(--gold2);opacity:.85}
 @media (prefers-reduced-motion:reduce){.splash{transition:none}}
@@ -169,11 +179,15 @@ main{max-width:620px;margin:0 auto;padding:14px 12px 150px}
   <div class="sp-card">
     <img class="sp-logo" src="icons/logo-240.png" alt="مصحف الأمة">
     <div class="sp-t1">الجمع الصوتي للقرآن الكريم</div>
-    <div class="sp-lbl">بصوت فضيلة الشيخ</div>
-    <div class="sp-name">أحمد عيسى المعصراوي</div>
+    <div class="sp-lbl">بصوت الشيخ</div>
+    <div class="sp-name">أحمد المعصراوي</div>
     <div class="sp-rule"></div>
-    <div class="sp-lbl">إعداد ومراجعة الشيخ</div>
-    <div class="sp-name2">عبدالفتاح مصطفى هيكل</div>
+    <div class="sp-lbl">إعداد ومراجعة</div>
+    <div class="sp-pair">
+      <div><span class="sp-lbl">الشيخ</span><span class="sp-name2">أحمد المعصراوي</span></div>
+      <div class="sp-sep"></div>
+      <div><span class="sp-lbl">الشيخ</span><span class="sp-name2">عبدالفتاح هيكل</span></div>
+    </div>
     <div class="sp-skip">اضغط للدخول</div>
   </div>
 </div>
@@ -230,6 +244,7 @@ sp.addEventListener('click',hide);setTimeout(hide,4000)})();</script>
   <div id="goList"></div>
 </section>
 <div class="toast" id="toast"></div>
+<div class="inst" id="inst" hidden><img src="icons/apple-touch-icon.png" alt=""><div class="t" id="instTxt">ثبّت «مصحف الأمة» على جهازك ليفتح كتطبيق</div><button class="go" id="instGo">تثبيت</button><button class="x" id="instX" aria-label="إغلاق">×</button></div>
 <audio id="aud" preload="auto"></audio>
 
 <script>
@@ -239,7 +254,7 @@ const AR=n=>String(n).replace(/\d/g,d=>'٠١٢٣٤٥٦٧٨٩'[d]);
 const fmt=t=>{if(!isFinite(t))return '0:00';t=Math.floor(t);return Math.floor(t/60)+':'+String(t%60).padStart(2,'0')};
 const store={get(k){try{return localStorage.getItem(k)}catch(e){return null}},set(k,v){try{localStorage.setItem(k,v)}catch(e){}}};
 let D,N={},R=null,P=1,auto=true,wantPlay=false,busy=false;
-const aud=$('aud');
+const aud=$('aud');const nextAud=new Audio();nextAud.preload='auto';nextAud.muted=true;
 
 const ICON_PLAY='<path d="M8 5v14l11-7z"/>';
 const ICON_PAUSE='<path d="M6 5h4v14H6zm8 0h4v14h-4z"/>';
@@ -279,8 +294,11 @@ function loadAudio(play){
   if(aud.dataset.src!==url){aud.dataset.src=url;aud.src=url;aud.load()}
   if(play){aud.play().catch(()=>{setPlayIcon()})}
   if('mediaSession' in navigator){
-    navigator.mediaSession.metadata=new MediaMetadata({title:'صفحة '+P+' – سورة '+D.suras[D.pages[P-1][0]-1][2],artist:'رواية '+R.name,album:'مصحف الأمة'});
+    navigator.mediaSession.metadata=new MediaMetadata({title:'صفحة '+P+' – سورة '+D.suras[D.pages[P-1][0]-1][2],artist:'رواية '+R.name+' – الشيخ أحمد المعصراوي',album:'مصحف الأمة',
+      artwork:[{src:'icons/icon-192.png',sizes:'192x192',type:'image/png'},{src:'icons/icon-512.png',sizes:'512x512',type:'image/png'}]});
   }
+  // fetch the next page's recitation in advance so continuous play does not stall in the background
+  const nu=P<604?audioUrl(R,P+1):null;if(nu&&nextAud.dataset.src!==nu){nextAud.dataset.src=nu;nextAud.src=nu;nextAud.load()}
   // warm up next page image
   if(P<604){const i=new Image();i.src=imgUrl(P+1)}
 }
@@ -289,11 +307,9 @@ function show(p,dir,play){
   p=Math.max(1,Math.min(604,p|0));
   if(p===P&&$('pimg').getAttribute('src'))return;
   const leaf=$('leaf');P=p;
-  const swap=()=>{
-    loadImg();
-    renderMeta();syncUrl();loadAudio(play);
-  };
-  if(!dir||matchMedia('(prefers-reduced-motion: reduce)').matches){swap();return}
+  syncUrl();loadAudio(play);          // sound first, so it never waits for the page animation
+  const swap=()=>{loadImg();renderMeta()};
+  if(!dir||document.hidden||matchMedia('(prefers-reduced-motion: reduce)').matches){swap();return}
   leaf.classList.add(dir>0?'out-next':'out-prev');
   setTimeout(()=>{leaf.classList.remove('out-next','out-prev');leaf.classList.add(dir>0?'in-next':'in-prev');swap();
     void leaf.offsetWidth;leaf.classList.remove('in-next','in-prev')},260);
@@ -348,7 +364,15 @@ aud.addEventListener('timeupdate',()=>{$('tCur').textContent=fmt(aud.currentTime
   $('barFill').style.width=(aud.duration?aud.currentTime/aud.duration*100:0)+'%'});
 aud.addEventListener('waiting',()=>{$('status').textContent='جارٍ تحميل التلاوة…'});
 aud.addEventListener('playing',()=>{$('status').textContent='رواية '+R.name+' · صفحة '+AR(P)});
-aud.addEventListener('ended',()=>{if(auto&&P<604)show(P+1,1,true);else setPlayIcon()});
+aud.addEventListener('ended',()=>{store.set('pos','');if(auto&&P<604)show(P+1,1,true);else setPlayIcon()});
+let lastSave=0,resumeAt=0;
+function savePos(){if(R&&aud.currentTime>1)store.set('pos',JSON.stringify({p:P,r:R.id,t:Math.floor(aud.currentTime)}))}
+aud.addEventListener('timeupdate',()=>{const n=Date.now();if(n-lastSave>4000){lastSave=n;savePos()}
+  if('mediaSession' in navigator&&navigator.mediaSession.setPositionState&&aud.duration>0){try{navigator.mediaSession.setPositionState({duration:aud.duration,position:Math.min(aud.currentTime,aud.duration),playbackRate:1})}catch(e){}}});
+aud.addEventListener('loadedmetadata',()=>{if(resumeAt>0&&resumeAt<aud.duration-2){aud.currentTime=resumeAt}resumeAt=0});
+aud.addEventListener('play',()=>{if('mediaSession' in navigator)navigator.mediaSession.playbackState='playing'});
+aud.addEventListener('pause',()=>{savePos();if('mediaSession' in navigator)navigator.mediaSession.playbackState='paused'});
+addEventListener('pagehide',savePos);document.addEventListener('visibilitychange',()=>{if(document.hidden)savePos();else{loadImg();renderMeta()}});
 function failed(){
   const v=driveView(R,P);
   $('status').innerHTML='تعذّر التشغيل داخل الموقع'+(v?` – <a href="${v}" target="_blank" rel="noopener">افتح التلاوة في Drive</a>`:'');
@@ -359,6 +383,10 @@ aud.addEventListener('error',()=>{if(aud.getAttribute('src'))failed()});
 if('mediaSession' in navigator){
   navigator.mediaSession.setActionHandler('nexttrack',()=>show(P+1,1,true));
   navigator.mediaSession.setActionHandler('previoustrack',()=>show(P-1,-1,true));
+  try{navigator.mediaSession.setActionHandler('play',()=>aud.play());navigator.mediaSession.setActionHandler('pause',()=>aud.pause());
+    navigator.mediaSession.setActionHandler('seekto',e=>{if(e.seekTime!=null)aud.currentTime=e.seekTime});
+    navigator.mediaSession.setActionHandler('seekbackward',e=>{aud.currentTime=Math.max(0,aud.currentTime-(e.seekOffset||10))});
+    navigator.mediaSession.setActionHandler('seekforward',e=>{aud.currentTime=Math.min(aud.duration||0,aud.currentTime+(e.seekOffset||10))})}catch(e){}
 }
 // swipe: finger moving right = next page (as turning an Arabic mushaf)
 let sx=null,sy=0;
@@ -374,13 +402,30 @@ auto=store.get('auto')!=='0';$('autoSw').classList.toggle('on',auto);
 Promise.all([fetch('data.json',{cache:'no-cache'}).then(r=>r.json()),fetch('notes.json',{cache:'no-cache'}).then(r=>r.json()).catch(()=>({}))]).then(([d,n])=>{
   D=d;N=n;
   const q=new URLSearchParams(location.search);let last={};try{last=JSON.parse(store.get('last')||'{}')}catch(e){}
-  const rid=q.get('r')||'hafs';   // the plain link always opens on Hafs; printed QR codes carry their own riwaya
+  // QR codes carry their own page/riwaya; otherwise reopen exactly where the listener stopped; first visit = Hafs
+  let pos={};try{pos=JSON.parse(store.get('pos')||'{}')}catch(e){}
+  const qp=+q.get('p')||0,qr=q.get('r');
+  const rid=qr||last.r||'hafs';
+  const page=qp||((!qr||qr===last.r)?last.p:0)||1;
   P=0;
-  if(rid){const r=D.riwayat.find(x=>x.id===rid);if(r){R=r;$('riwName').textContent='رواية '+r.name}}
-  show(+(q.get('p')||last.p||1)||1,0,false);
+  const r=D.riwayat.find(x=>x.id===rid)||D.riwayat.find(x=>x.id==='hafs');if(r){R=r;$('riwName').textContent='رواية '+r.name}
+  if(pos.r===R.id&&pos.p===page&&pos.t>2)resumeAt=pos.t;
+  show(page,0,false);
   setPlayIcon();
-  if(!q.get('p')&&!last.p)toast('اضغط ▶ للاستماع، واسحب الصفحة للتقليب');
+  if(resumeAt)setTimeout(()=>toast('اضغط ▶ لتكمل من حيث توقفت – صفحة '+AR(page)),1500);
+  else if(!qp&&!last.p)setTimeout(()=>toast('اضغط ▶ للاستماع، واسحب الصفحة للتقليب'),4300);
 });
+/* install as an app */
+let deferredInstall=null;
+const standalone=matchMedia('(display-mode: standalone)').matches||navigator.standalone;
+const ios=/iphone|ipad|ipod/i.test(navigator.userAgent);
+function showInst(txt,btn){if(standalone||store.get('instNo')==='1')return;$('instTxt').textContent=txt;$('instGo').hidden=!btn;$('inst').hidden=false}
+addEventListener('beforeinstallprompt',e=>{e.preventDefault();deferredInstall=e;setTimeout(()=>showInst('ثبّت «مصحف الأمة» على جهازك ليفتح كتطبيق',true),6000)});
+$('instGo').onclick=async()=>{$('inst').hidden=true;if(deferredInstall){deferredInstall.prompt();await deferredInstall.userChoice.catch(()=>{});deferredInstall=null}};
+$('instX').onclick=()=>{$('inst').hidden=true;store.set('instNo','1')};
+addEventListener('appinstalled',()=>{$('inst').hidden=true;toast('تم تثبيت مصحف الأمة')});
+if(ios&&!standalone)setTimeout(()=>showInst('لتثبيت التطبيق: اضغط زر المشاركة ⬆️ ثم «إضافة إلى الشاشة الرئيسية»',false),7000);
+if('serviceWorker' in navigator)addEventListener('load',()=>navigator.serviceWorker.register('sw.js').catch(()=>{}));
 })();
 </script>
 </body>

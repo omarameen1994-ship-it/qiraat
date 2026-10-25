@@ -263,10 +263,15 @@ function toast(m){const t=$('toast');t.textContent=m;t.classList.add('show');cle
 function audioUrl(r,p){
   if(!r||!r.audio) return null;
   if(r.audio.base&&p<=(r.audio.local||604)) return r.audio.base+String(p).padStart(3,'0')+'.mp3';
+  if(r.audio.archive&&onArchive(r)) return 'https://archive.org/download/'+r.audio.archive+'/Page_'+String(p).padStart(3,'0')+'.mp3';
   if(r.audio.type==='drive') return null;
   if(r.audio.type==='url') return r.audio.pattern.replace('{p3}',String(p).padStart(3,'0')).replace('{p}',p);
   return null;
 }
+// recitations uploaded to archive.org (checked once; unknown = assume uploaded)
+let ARCH=null;
+function onArchive(r){return !!(r&&r.audio&&r.audio.archive)&&(ARCH===null||ARCH.has(r.audio.archive))}
+function avail(r){return !!(r&&r.audio&&(r.audio.base||r.audio.type||onArchive(r)))}
 function driveView(r,p){return r&&r.audio&&r.audio.type==='drive'&&r.audio.ids[String(p)]?'https://drive.google.com/file/d/'+r.audio.ids[String(p)]+'/view':null}
 function ownImg(p){return !!(R&&R.mushaf&&R.mushaf!=='hafs'&&p<=(R.mpages||604))}
 function imgUrl(p){const m=ownImg(p)?R.mushaf:'hafs';return 'pages/'+m+'/'+String(p).padStart(3,'0')+'.png'}
@@ -290,7 +295,7 @@ function loadAudio(play){
   $('status').innerHTML='';
   if(!R){aud.removeAttribute('src');$('status').textContent='اختر رواية للاستماع';return}
   if(!url){aud.removeAttribute('src');aud.load();const v=driveView(R,P);
-    $('status').innerHTML=v?`هذه الصفحة تُسمع حاليًا من Drive – <a href="${v}" target="_blank" rel="noopener">افتح التلاوة</a>`:'تلاوة رواية '+R.name+(R.audio&&R.audio.local?' متاحة حاليًا للصفحات ١–'+AR(R.audio.local):' لهذه الصفحة غير متوفرة بعد');setPlayIcon();return}
+    $('status').innerHTML=v?`هذه الصفحة تُسمع حاليًا من Drive – <a href="${v}" target="_blank" rel="noopener">افتح التلاوة</a>`:'تلاوة رواية '+R.name+(R.audio&&R.audio.local?' متاحة حاليًا للصفحات ١–'+AR(R.audio.local)+'، وبقية المصحف تُضاف قريبًا':' لهذه الصفحة تُضاف قريبًا بإذن الله');setPlayIcon();return}
   if(aud.dataset.src!==url){aud.dataset.src=url;aud.src=url;aud.load()}
   if(play){aud.play().catch(()=>{setPlayIcon()})}
   if('mediaSession' in navigator){
@@ -318,7 +323,7 @@ function show(p,dir,play){
 
 function setRiwaya(id,quiet){
   const r=D.riwayat.find(x=>x.id===id);if(!r)return;
-  if(!r.audio&&!r.mpages&&!quiet){toast('رواية '+r.name+' ستُضاف قريبًا بإذن الله');return}
+  if(!avail(r)&&!r.mpages&&!quiet){toast('رواية '+r.name+' ستُضاف قريبًا بإذن الله');return}
   const was=!aud.paused,old=R&&R.id;R=r;$('riwName').textContent='رواية '+r.name;
   if(old!==r.id&&$('pimg').getAttribute('src'))loadImg();
   aud.dataset.src='';closeSheets();renderRiw();renderMeta();syncUrl();loadAudio(was||!quiet);
@@ -330,7 +335,7 @@ function closeSheets(){$('scrim').classList.remove('show');document.querySelecto
 function renderRiw(){
   const by={};D.riwayat.forEach(r=>(by[r.qari]=by[r.qari]||[]).push(r));
   $('riwList').innerHTML=Object.entries(by).map(([q,rs])=>`<div class="qari"><h3>قراءة ${q}</h3><div class="rgrid">${rs.map(r=>
-    `<button class="rbtn${R&&R.id===r.id?' cur':''}${r.audio||r.mpages?'':' soon'}" data-r="${r.id}"><span>${r.name}</span><small>${R&&R.id===r.id?'مختارة الآن':r.audio?'متاحة':r.mpages?'المصحف فقط':'قريبًا'}</small></button>`).join('')}</div></div>`).join('');
+    `<button class="rbtn${R&&R.id===r.id?' cur':''}${avail(r)||r.mpages?'':' soon'}" data-r="${r.id}"><span>${r.name}</span><small>${R&&R.id===r.id?'مختارة الآن':avail(r)?'متاحة':r.mpages?'المصحف فقط':'قريبًا'}</small></button>`).join('')}</div></div>`).join('');
 }
 function renderGo(t){
   document.querySelectorAll('.tabs button').forEach(b=>b.classList.toggle('on',b.dataset.t===t));
@@ -374,6 +379,7 @@ aud.addEventListener('play',()=>{if('mediaSession' in navigator)navigator.mediaS
 aud.addEventListener('pause',()=>{savePos();if('mediaSession' in navigator)navigator.mediaSession.playbackState='paused'});
 addEventListener('pagehide',savePos);document.addEventListener('visibilitychange',()=>{if(document.hidden)savePos();else{loadImg();renderMeta()}});
 function failed(){
+  if((aud.getAttribute('src')||'').includes('archive.org')){$('status').textContent='تلاوة هذه الصفحة برواية '+R.name+' لم تكتمل بعد، تُضاف قريبًا';setPlayIcon();return}
   const v=driveView(R,P);
   $('status').innerHTML='تعذّر التشغيل داخل الموقع'+(v?` – <a href="${v}" target="_blank" rel="noopener">افتح التلاوة في Drive</a>`:'');
   setPlayIcon();
@@ -401,6 +407,8 @@ const th=store.get('theme');if(th)document.documentElement.dataset.theme=th;
 auto=store.get('auto')!=='0';$('autoSw').classList.toggle('on',auto);
 Promise.all([fetch('data.json',{cache:'no-cache'}).then(r=>r.json()),fetch('notes.json',{cache:'no-cache'}).then(r=>r.json()).catch(()=>({}))]).then(([d,n])=>{
   D=d;N=n;
+  fetch('https://archive.org/advancedsearch.php?q=identifier%3Aalmasrawi-qiraat-*&fl%5B%5D=identifier&rows=100&output=json')
+    .then(r=>r.json()).then(j=>{ARCH=new Set(j.response.docs.map(x=>x.identifier));if(R&&!aud.getAttribute('src'))loadAudio(false)}).catch(()=>{});
   const q=new URLSearchParams(location.search);let last={};try{last=JSON.parse(store.get('last')||'{}')}catch(e){}
   // QR codes carry their own page/riwaya; otherwise reopen exactly where the listener stopped; first visit = Hafs
   let pos={};try{pos=JSON.parse(store.get('pos')||'{}')}catch(e){}

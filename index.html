@@ -379,8 +379,10 @@ async function renderLive(){
     `<button class="lbtn${LIVE&&LIVE.id===r.id?' cur':''}" data-l="${r.id}"><b>إذاعة ${r.name}</b><small id="lv-${r.id}">${LIVE&&LIVE.id===r.id?'تستمع الآن':'اضغط للاستماع'}</small></button>`).join('')}</div></div>`).join('');
   for(const r of liveR()){const el=$('lv-'+r.id);const d=DUR[r.id]||(()=>{try{return JSON.parse(store.get('dur3:'+r.id)||'null')}catch(e){return null}})();
     if(el&&d&&d.length===604){const x=livePos(d);el.textContent='الآن: '+D.suras[D.pages[x.page-1][0]-1][2]+' · ص '+AR(x.page)}}
-  for(const r of liveR()){if(DUR[r.id])continue;try{const d=await durations(r.id);const el=$('lv-'+r.id);
-    if(el&&!(LIVE&&LIVE.id===r.id)){const x=livePos(d);el.textContent='الآن: '+D.suras[D.pages[x.page-1][0]-1][2]+' · ص '+AR(x.page)}}catch(e){const el=$('lv-'+r.id);if(el)el.textContent='غير متاحة الآن'}}
+  const todo=liveR().filter(r=>!DUR[r.id]);
+  const one=async r=>{try{const d=await durations(r.id);const el=$('lv-'+r.id);
+    if(el&&!(LIVE&&LIVE.id===r.id)){const x=livePos(d);el.textContent='الآن: '+D.suras[D.pages[x.page-1][0]-1][2]+' · ص '+AR(x.page)}}catch(e){const el=$('lv-'+r.id);if(el)el.textContent='غير متاحة الآن'}};
+  const run=async()=>{while(todo.length)await one(todo.shift())};await Promise.all([run(),run(),run(),run()]);
 }
 function liveStatus(){if(!LIVE)return;const s=$('status');s.classList.add('live');
   s.textContent='بث مباشر – إذاعة رواية '+R.name+' · الختمة رقم '+AR(LIVE.khatma)+' ('+AR(Math.floor(LIVE.done*100))+'٪)'}

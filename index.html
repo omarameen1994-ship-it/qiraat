@@ -115,6 +115,16 @@ main{max-width:620px;margin:0 auto;padding:14px 12px 150px}
 @media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .sheet .x{position:absolute;left:0;top:14px;width:34px;height:34px;border-radius:50%;background:var(--paper2);color:#3a3326;font-size:16px}
 .sheet h2{color:var(--gold2)}}
 .qari{margin-top:14px}
+.livebtn{position:relative}
+.livebtn.on::after{content:"";position:absolute;top:5px;left:5px;width:9px;height:9px;border-radius:50%;background:#ff3b30;box-shadow:0 0 0 2px var(--green);animation:pulse 1.4s infinite}
+@keyframes pulse{50%{opacity:.35}}
+.lintro{font-size:13.5px;color:var(--muted);text-align:center;line-height:1.7;margin:2px 4px 6px}
+.lgrid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px}
+.lbtn{padding:10px;border-radius:12px;border:1.5px solid rgba(196,154,62,.5);background:var(--paper);color:#1d1a14;text-align:right;display:flex;flex-direction:column;gap:2px}
+.lbtn b{font-size:16px;display:flex;align-items:center;gap:6px}.lbtn b::before{content:"";width:8px;height:8px;border-radius:50%;background:#e0453a}
+.lbtn small{font-size:11.5px;color:#8a7e66;min-height:16px}
+.lbtn.cur{background:var(--green);color:#fff;border-color:var(--green)}.lbtn.cur small{color:var(--gold2)}
+.status.live{color:#fff}.status.live::before{content:"● ";color:#ff5a4f}
 .qari h3{font-size:14px;color:var(--muted);margin-bottom:6px;display:flex;align-items:center;gap:8px}
 .qari h3::after{content:"";flex:1;height:1px;background:rgba(196,154,62,.4)}
 .rgrid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
@@ -204,6 +214,7 @@ sp.addEventListener('click',hide);setTimeout(hide,4000)})();</script>
   <div class="brand"><img class="brand-logo" src="icons/favicon-64.png" alt="">مصحف الأمة<small>القراءات العشر · الروايات العشرون</small></div>
   <div class="sp"></div>
   <button class="chip" id="riwBtn" aria-label="اختيار الرواية"><span class="dot"></span><span id="riwName">اختر الرواية</span></button>
+  <button class="icon-btn livebtn" id="liveBtn" aria-label="البث المباشر"><svg viewBox="0 0 24 24"><path d="M12 10.5a1.5 1.5 0 1 0 0 3 1.5 1.5 0 0 0 0-3zm-4.2-2.7 1.1 1.1a4.4 4.4 0 0 0 0 6.2l-1.1 1.1a6 6 0 0 1 0-8.4zm8.4 0a6 6 0 0 1 0 8.4l-1.1-1.1a4.4 4.4 0 0 0 0-6.2zM5 5l1.1 1.1a8.4 8.4 0 0 0 0 11.8L5 19a10 10 0 0 1 0-14zm14 0a10 10 0 0 1 0 14l-1.1-1.1a8.4 8.4 0 0 0 0-11.8z"/></svg></button>
   <button class="icon-btn" id="goBtn" aria-label="الانتقال إلى صفحة"><svg viewBox="0 0 24 24"><path d="M3 5h18v2H3zm0 6h18v2H3zm0 6h12v2H3z"/></svg></button>
 </header>
 
@@ -241,6 +252,11 @@ sp.addEventListener('click',hide);setTimeout(hide,4000)})();</script>
 <section class="sheet" id="riwSheet" aria-label="الروايات">
   <div class="grab"><button class="x" data-close aria-label="إغلاق">✕</button><h2>اختر الرواية</h2></div>
   <div id="riwList"></div>
+</section>
+<section class="sheet" id="liveSheet" aria-label="البث المباشر">
+  <div class="grab"><button class="x" data-close aria-label="إغلاق">✕</button><h2>البث المباشر</h2></div>
+  <p class="lintro">لكل رواية إذاعة تتلو ختمة كاملة دون توقف، ليلًا ونهارًا.<br>كل من يفتح الإذاعة يسمع الموضع نفسه في اللحظة نفسها، والصفحات تتقلّب مع التلاوة.</p>
+  <div id="liveList"></div>
 </section>
 <section class="sheet" id="goSheet" aria-label="الانتقال">
   <div class="grab"><button class="x" data-close aria-label="إغلاق">✕</button><h2>انتقل إلى</h2></div>
@@ -305,7 +321,7 @@ function loadAudio(play){
   if(aud.dataset.src!==url){aud.dataset.src=url;aud.src=url;aud.load()}
   if(play){aud.play().catch(()=>{setPlayIcon()})}
   if('mediaSession' in navigator){
-    navigator.mediaSession.metadata=new MediaMetadata({title:'صفحة '+P+' – سورة '+D.suras[D.pages[P-1][0]-1][2],artist:'رواية '+R.name+' – الشيخ أحمد المعصراوي',album:'مصحف الأمة',
+    navigator.mediaSession.metadata=new MediaMetadata({title:'صفحة '+P+' – سورة '+D.suras[D.pages[P-1][0]-1][2],artist:(LIVE?'بث مباشر – ':'')+'رواية '+R.name+' – الشيخ أحمد المعصراوي',album:'مصحف الأمة',
       artwork:[{src:'icons/icon-192.png',sizes:'192x192',type:'image/png'},{src:'icons/icon-512.png',sizes:'512x512',type:'image/png'}]});
   }
   // fetch the next page's recitation in advance so continuous play does not stall in the background
@@ -316,6 +332,7 @@ function loadAudio(play){
 
 function show(p,dir,play){
   p=Math.max(1,Math.min(604,p|0));
+  if(LIVE&&!liveNav)exitLive();
   if(p===P&&$('pimg').getAttribute('src'))return;
   const leaf=$('leaf');P=p;
   syncUrl();loadAudio(play);          // sound first, so it never waits for the page animation
@@ -330,10 +347,62 @@ function show(p,dir,play){
 function setRiwaya(id,quiet){
   const r=D.riwayat.find(x=>x.id===id);if(!r)return;
   if(!avail(r)&&!r.mpages&&!quiet){toast('رواية '+r.name+' ستُضاف قريبًا بإذن الله');return}
+  if(LIVE&&LIVE.id!==id)exitLive();
   const was=!aud.paused,old=R&&R.id;R=r;$('riwName').textContent='رواية '+r.name;
   if(old!==r.id&&$('pimg').getAttribute('src'))loadImg();
   aud.dataset.src='';closeSheets();renderRiw();renderMeta();syncUrl();loadAudio(was||!quiet);
 }
+
+/* ===== live broadcast: one endless khatma per riwaya, the same moment for every listener ===== */
+const LIVE_FALLBACK={warsh:[64.36,79.14,229.2,228.15,213.04,260.51,261.32,235.25,201.82,232.98,232.61,231.51,239.35,224.92,215.47,205.55,213.71,226.53,261.09,237.34,241.02,223.61,204.32,229.9,229.9,235.41,243.55,207.59,189.73,245.04,207.12,214.89,244.54,211.09,241.3,268.55,250.41,224.7,180.36,203.28,170.21,217.61,200.64,210.56,235.64,179.89,219.25,210.19,202.63,211.01,189.71,202.67,209.51,223.35,214.42,246.37,238.04,257.43,244.17,239.58,225.2,229.65,233.73,196.41,215.12,231.57,196.31,204.4,178.66,222.04,221.18,199.36,218.99,205.65,223.66,207.42,273.61,224.92,169.76,196.18,315.84,184.59,177.99,159.82,215.71,239.06,224.02,176.13,186.96,231.26,194.88,198.08,180.91,200.69,184.91,187.99,182.53,191.59,181.3,225.04,225.22,197.43,207.38,212.68,208.63,219.41,224.47,216.17,186.6,160.21,223.22,213.27,208.65,212.41,217.32,264.4,293.69,263.9,242.95,237.71,184.78,225.69,219.38,193.75,256.68,193.6,256.24,196.51,182.89,255.92,221.18,250.23,229.8,219.41,221.11,191.04,253.57,259.89,265.68,243.6,250.99,231.15,208.21,203.49,201.82,213.43,233.34,217.16,231.7,292.54,247.88,300.35,277.56,274.12,271.27,287.61,251.61,208.05,240.29,209.52,205.81,255.19,230.76,269.86,255.58,246.89,277.14,260.54,250.89,214.42,155.77,210.97,236.01,245.2,248.48,207.64,190.15,213.88,212.08,227.71,195.05,212.8,194.61,217.39,230.27,231.81,188.59,201.58,215.62,224.6,206.72,191.64,186.73,189.45,200.64,202.34,198.42,208.08,197.27,212.2,181.62,196.6,207.72,196.57,213.85,216.83,199.44,190.15,220.06,221.88,314.64,241.44,245.87,250.41,220.11,191.04,252.24,248.04,253.24,240.29,230.43,233.29,218.42,243.39,245.2,229.8,231.21,282.36,247.75,264.93,215.13,223.01,247.75,215.31,216.56,236.19,259.13,227.76,259.03,247.23,258.19,243.25,237.6,222.8,222.25,210.98,237.11,216.93,236.61,215.31,250.23,259.57,229.01,233.24,177.96,233.29,213.56,220.93,228.1,236.08,208.06,197.14,237.5,214.42,263.02,249.11,215.75,218.83,229.61,259.89,225.02,241.91,237.1,249.03,205.18,202.23,207.89,213.58,186.96,199.7,209.67,196.18,233.89,221.31,210.82,240.6,205.67,221.86,219.72,210.01,214.31,229.51,193.28,207.69,208.18,213.66,220.99,259.78,223.58,215.25,229.77,215.47,243.44,254.17,180.49,208.21,213.74,241.04,247.31,216.48,196.44,176.21,193.67,227.16,198.63,266.96,226.84,218.03,208.47,215.41,231.15,180.05,226.01,210.43,194.93,226.85,234.86,208.84,183.13,190.23,182.74,201.53,214.63,200.48,177.44,223.61,186.13,205.73,180.86,208.94,176.73,191.35,236.5,256.21,251.61,242.71,204.34,214.97,220.06,227,241.33,240.75,224.31,247.97,274.44,264.79,215.36,223.84,213.51,216.27,226.35,205.84,199.2,220.08,189.24,180.65,230.11,227.66,272.31,234.21,232.85,242.53,230.84,226.51,236.32,212.8,264.22,241.33,232.72,287.06,202.04,213.98,220.06,225.52,193.67,197.25,221.42,215.21,219.09,228.57,266.08,243.89,236.19,207.72,217.11,209.62,206.33,203.98,192.79,180.34,180.29,215.52,240.99,198.21,221.88,238.98,214.18,253.39,267.98,247.6,225.62,231.6,235.22,245.01,232.02,265.53,205.13,250.28,244.8,222.01,234.16,212.31,241.8,262.03,264.12,250.99,235.46,182.79,221.02,235.04,217.61,251.88,263.88,211.03,245.03,197.35,218.41,215.36,244.44,229.66,272.07,231.54,265.81,233.03,221.52,247.75,287.45,258.48,249.29,229.01,235.41,242.79,237.44,238.1,254.83,261.48,261.64,215.86,250,237.44,225.69,208.73,207.87,234.31,199.18,249.39,201,251.43,233.89,248.04,241.25,239.79,207.37,206.38,244.1,237.39,240.08,253.99,266.02,226.43,264.01,264.95,232.02,243.29,205.73,237.05,270.93,256.39,207.11,245.97,287.53,259.65,241.69,237.54,251.38,219.83,267.28,207.09,259.08,249.29,298.34,217.49,241.7,237.5,248.8,209.23,225.1,264.98,189.55,215.96,188.79,206.67,197.59,197.82,211.89,246.68,232.51,209.52,247.49,182.09,251.28,246.19,198.86,250.46,226.61,232.09,234.6,204.64,236.45,238.54,203.72,268.27,274.77,226.11,267.92,279.49,234.23,235.36,249.03,242.09,232.96,226.12,243.68,266.38,203.8,242.89,213.12,192.97,279.72,260.98,196.31,263.96,198.6,209.94,208.42,214.42,194.14,227.32,301.83,281.37,251.59,238.25,247.44,229.8,296.74,224.11,264.75,208.13,256.49,208.79,227.97,246,246.03,218.97,242.64,287.11,222.14,227.03,270.46,217.77,250.57,188.89,199.77,202.17,224.7,182.49,175.08,238.09,181.4,191.73,157.93,166.31,173.72,164.04,146.87,147.96,155.82,154.67,146.97,150.1,113.25,108.21,115.7,88.43]};   // warsh: from file sizes (constant 80 kb/s)                       // filled for riwayat whose archive item lacks page lengths
+const EPOCH=Date.UTC(2026,9,31,21,0,0);          // 1 Nov 2026, 00:00 Makkah time: start of the first khatma
+let LIVE=null,liveNav=false;const DUR={};
+function sec(v){if(v==null)return NaN;v=String(v);return v.includes(':')?v.split(':').map(Number).reduce((a,b)=>a*60+b,0):+v}
+async function durations(id){                    // seconds of every page, from the archive (cached on the phone)
+  if(DUR[id])return DUR[id];
+  if(LIVE_FALLBACK[id])return DUR[id]=LIVE_FALLBACK[id];      // fixed table: every listener gets the same one
+  try{const c=JSON.parse(store.get('dur3:'+id)||'null');if(c&&c.length===604){return DUR[id]=c}}catch(e){}
+  let arr=null;
+  try{const m=await fetch('https://archive.org/metadata/almasrawi-qiraat-'+id+'/files').then(r=>r.json());
+    const a=new Array(604).fill(NaN);for(const f of (m.result||[])){const x=/^Page_(\d+)\.mp3$/i.exec(f.name);if(x&&f.source==='original')a[+x[1]-1]=Math.round(sec(f.length)*100)/100}
+    if(a.every(x=>x>0))arr=a}catch(e){}
+  if(!arr&&LIVE_FALLBACK[id])arr=LIVE_FALLBACK[id];
+  if(!arr)throw new Error('nodur');
+  store.set('dur3:'+id,JSON.stringify(arr));return DUR[id]=arr;
+}
+function livePos(d){const T=d.reduce((a,b)=>a+b,0);const el=(Date.now()-EPOCH)/1000;const k=Math.floor(el/T);let t=el-k*T;
+  let p=0;while(p<603&&t>=d[p]){t-=d[p];p++}return{page:p+1,off:t,khatma:k+1,T,done:(el-k*T)/T}}
+function liveR(){return D.riwayat.filter(r=>r.audio&&r.audio.archive&&r.id!=='ishaq')}
+async function renderLive(){
+  const by={};liveR().forEach(r=>(by[r.qari]=by[r.qari]||[]).push(r));
+  $('liveList').innerHTML=Object.entries(by).map(([q,rs])=>`<div class="qari"><h3>قراءة ${q}</h3><div class="lgrid">${rs.map(r=>
+    `<button class="lbtn${LIVE&&LIVE.id===r.id?' cur':''}" data-l="${r.id}"><b>إذاعة ${r.name}</b><small id="lv-${r.id}">${LIVE&&LIVE.id===r.id?'تستمع الآن':'اضغط للاستماع'}</small></button>`).join('')}</div></div>`).join('');
+  for(const r of liveR()){const el=$('lv-'+r.id);const d=DUR[r.id]||(()=>{try{return JSON.parse(store.get('dur3:'+r.id)||'null')}catch(e){return null}})();
+    if(el&&d&&d.length===604){const x=livePos(d);el.textContent='الآن: '+D.suras[D.pages[x.page-1][0]-1][2]+' · ص '+AR(x.page)}}
+  for(const r of liveR()){if(DUR[r.id])continue;try{const d=await durations(r.id);const el=$('lv-'+r.id);
+    if(el&&!(LIVE&&LIVE.id===r.id)){const x=livePos(d);el.textContent='الآن: '+D.suras[D.pages[x.page-1][0]-1][2]+' · ص '+AR(x.page)}}catch(e){const el=$('lv-'+r.id);if(el)el.textContent='غير متاحة الآن'}}
+}
+function liveStatus(){if(!LIVE)return;const s=$('status');s.classList.add('live');
+  s.textContent='بث مباشر – إذاعة رواية '+R.name+' · الختمة رقم '+AR(LIVE.khatma)+' ('+AR(Math.floor(LIVE.done*100))+'٪)'}
+async function startLive(id,silent,fromEnded){
+  let d;try{d=await durations(id)}catch(e){toast('هذه الإذاعة غير متاحة الآن، جرّب بعد قليل');return}
+  const r=D.riwayat.find(x=>x.id===id);if(!r)return;
+  const x=livePos(d);
+  if(fromEnded&&LIVE&&LIVE.id===id){            // a page just finished
+    if(P===604&&x.page<=2){x.page=1;x.off=Math.min(x.off,5)}       // new khatma begins
+    else if(x.page<=P){x.page=P+1;x.off=0}                          // our audio ran a little ahead of the table: simply go on
+  }
+  LIVE={id,khatma:x.khatma,done:x.done};
+  R=r;$('riwName').textContent='رواية '+r.name;renderRiw();
+  resumeAt=x.off>1?x.off:0;liveNav=true;
+  if(P===x.page){aud.dataset.src='';loadAudio(true);loadImg();renderMeta()}else show(x.page,1,true);
+  liveNav=false;aud.dataset.src=aud.dataset.src||'';
+  $('liveBtn').classList.add('on');closeSheets();liveStatus();
+  if(!silent)toast('أنت الآن في البث المباشر – إذاعة رواية '+r.name);
+  const u=new URL(location.href);u.searchParams.set('live',id);history.replaceState(null,'',u);
+}
+function exitLive(msg){if(!LIVE)return;LIVE=null;$('liveBtn').classList.remove('on');$('status').classList.remove('live');
+  const u=new URL(location.href);u.searchParams.delete('live');history.replaceState(null,'',u);if(msg!==false)toast('خرجت من البث المباشر')}
 
 /* sheets */
 function openSheet(id){$('scrim').classList.add('show');$(id).classList.add('show')}
@@ -353,6 +422,9 @@ function renderGo(t){
 /* wiring */
 $('riwBtn').onclick=()=>{renderRiw();openSheet('riwSheet')};
 $('goBtn').onclick=()=>{renderGo('s');openSheet('goSheet');};
+$('liveBtn').onclick=()=>{renderLive();openSheet('liveSheet')};
+$('liveList').onclick=e=>{const b=e.target.closest('[data-l]');if(b)startLive(b.dataset.l)};
+setInterval(()=>{if(LIVE&&DUR[LIVE.id]){const x=livePos(DUR[LIVE.id]);LIVE.khatma=x.khatma;LIVE.done=x.done;if(!aud.paused)liveStatus()}},30000);
 $('scrim').onclick=closeSheets;document.querySelectorAll('[data-close]').forEach(b=>b.onclick=closeSheets);
 $('riwList').onclick=e=>{const b=e.target.closest('[data-r]');if(b)setRiwaya(b.dataset.r)};
 $('goList').onclick=e=>{const b=e.target.closest('[data-p]');if(b){closeSheets();show(+b.dataset.p,+b.dataset.p>P?1:-1,!aud.paused)}};
@@ -362,20 +434,21 @@ $('nextBtn').onclick=()=>show(P+1,1,!aud.paused);
 $('prevBtn').onclick=()=>show(P-1,-1,!aud.paused);
 $('playBtn').onclick=()=>{
   if(!R){renderRiw();openSheet('riwSheet');return}
+  if(LIVE&&aud.paused){startLive(LIVE.id,true);return}      // a radio resumes at the live moment
   if(!aud.getAttribute('src')){loadAudio(false);if(!aud.getAttribute('src'))return}
   aud.paused?aud.play().catch(err=>failed()):aud.pause();
 };
 $('autoBtn').onclick=()=>{auto=!auto;$('autoSw').classList.toggle('on',auto);store.set('auto',auto?'1':'0');toast(auto?'التشغيل المتواصل مفعّل':'التشغيل المتواصل متوقف')};
 $('themeBtn').onclick=()=>{const d=document.documentElement;const cur=d.dataset.theme||(matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light');
   d.dataset.theme=cur==='dark'?'light':'dark';store.set('theme',d.dataset.theme)};
-$('bar').onclick=e=>{if(!aud.duration)return;const r=e.currentTarget.getBoundingClientRect();aud.currentTime=(e.clientX-r.left)/r.width*aud.duration};
+$('bar').onclick=e=>{if(!aud.duration)return;if(LIVE)exitLive();const r=e.currentTarget.getBoundingClientRect();aud.currentTime=(e.clientX-r.left)/r.width*aud.duration};
 
 aud.addEventListener('play',setPlayIcon);aud.addEventListener('pause',setPlayIcon);
 aud.addEventListener('timeupdate',()=>{$('tCur').textContent=fmt(aud.currentTime);$('tDur').textContent=fmt(aud.duration);
   $('barFill').style.width=(aud.duration?aud.currentTime/aud.duration*100:0)+'%'});
 aud.addEventListener('waiting',()=>{$('status').textContent='جارٍ تحميل التلاوة…'});
-aud.addEventListener('playing',()=>{$('status').textContent='رواية '+R.name+' · صفحة '+AR(P)});
-aud.addEventListener('ended',()=>{store.set('pos','');if(auto&&P<604)show(P+1,1,true);else setPlayIcon()});
+aud.addEventListener('playing',()=>{if(LIVE){liveStatus();const d=DUR[LIVE.id];if(d){const x=livePos(d);if(x.page===P&&Math.abs(aud.currentTime-x.off)>3&&x.off<(aud.duration||1e9)-2)aud.currentTime=x.off}return}$('status').classList.remove('live');$('status').textContent='رواية '+R.name+' · صفحة '+AR(P)});
+aud.addEventListener('ended',()=>{store.set('pos','');if(LIVE){startLive(LIVE.id,true,true);return}if(auto&&P<604)show(P+1,1,true);else setPlayIcon()});
 let lastSave=0,resumeAt=0;
 function savePos(){if(R&&aud.currentTime>1)store.set('pos',JSON.stringify({p:P,r:R.id,t:Math.floor(aud.currentTime)}))}
 aud.addEventListener('timeupdate',()=>{const n=Date.now();if(n-lastSave>4000){lastSave=n;savePos()}
@@ -424,6 +497,11 @@ Promise.all([fetch('data.json',{cache:'no-cache'}).then(r=>r.json()),fetch('note
   P=0;
   const r=D.riwayat.find(x=>x.id===rid)||D.riwayat.find(x=>x.id==='hafs');if(r){R=r;$('riwName').textContent='رواية '+r.name}
   if(!qp&&pos.r===R.id&&pos.p===page&&pos.t>2)resumeAt=pos.t;
+  const liveQ=q.get('live');
+  if(liveQ&&D.riwayat.some(x=>x.id===liveQ)){const sp=$('splash');if(sp)sp.remove();
+    $('qrgoT').textContent='استمع للبث المباشر';const rr=D.riwayat.find(x=>x.id===liveQ);$('qrgoS').textContent='إذاعة رواية '+rr.name;
+    const go=()=>{$('qrgo').hidden=true;startLive(liveQ)};$('qrgoBtn').onclick=go;$('qrgo').onclick=e=>{if(e.target===$('qrgo'))go()};$('qrgo').hidden=false;
+    show(page,0,false);setPlayIcon();return}
   const fromQR=!!(qp&&qr);
   if(fromQR){const sp=$('splash');if(sp)sp.remove()}      // QR scan: straight to the page and its recitation
   show(page,0,false);

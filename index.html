@@ -314,7 +314,7 @@ function renderMeta(){
   const [s,j]=D.pages[P-1];const sura=D.suras[s-1][2];
   $('mSura').textContent='سورة '+sura;$('mJuz').textContent='الجزء '+AR(j)+' · صفحة '+AR(P);
   $('pno').textContent=AR(P);
-  const n=N[String(P)];$('notes').hidden=!n;if(n)$('nbody').innerHTML=n;
+  const n=N[String(P)];$('notes').hidden=!n&&!LIVE;$('nbody').innerHTML=n||'<p style="text-align:center;color:var(--muted)">هوامش القراءات لهذه الصفحة تُضاف قريبًا بإذن الله</p>';
   document.title='صفحة '+AR(P)+' – سورة '+sura+(R?' – رواية '+R.name:'')+' | مصحف الأمة';
 }
 function setPlayIcon(){$('playIco').innerHTML=aud.paused?ICON_PLAY:ICON_PAUSE;$('playBtn').setAttribute('aria-label',aud.paused?'تشغيل':'إيقاف')}
@@ -406,7 +406,7 @@ async function startLive(id,silent,fromEnded){
   resumeAt=x.off>1?x.off:0;liveNav=true;
   if(P===x.page){aud.dataset.src='';loadAudio(true);loadImg();renderMeta()}else show(x.page,1,true);
   liveNav=false;aud.dataset.src=aud.dataset.src||'';
-  $('liveBtn').classList.add('on');closeSheets();liveStatus();
+  $('liveBtn').classList.add('on');closeSheets();liveStatus();$('notes').hidden=false;$('notes').open=true;renderMeta();
   if(!silent)toast('أنت الآن في البث المباشر – إذاعة رواية '+r.name);
   const u=new URL(location.href);u.searchParams.set('live',id);history.replaceState(null,'',u);
 }

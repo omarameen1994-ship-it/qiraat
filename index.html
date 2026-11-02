@@ -397,11 +397,11 @@ async function startLive(id,silent,fromEnded){
   let d;try{d=await durations(id)}catch(e){toast('هذه الإذاعة غير متاحة الآن، جرّب بعد قليل');return}
   const r=D.riwayat.find(x=>x.id===id);if(!r)return;
   const x=livePos(d);
-  if(fromEnded&&LIVE&&LIVE.id===id){            // a page just finished
-    if(P===604&&x.page<=2){x.page=1;x.off=Math.min(x.off,5)}       // new khatma begins
-    else if(x.page<=P){x.page=P+1;x.off=0}                          // our audio ran a little ahead of the table: simply go on
+  const cont=!!(fromEnded&&LIVE&&LIVE.id===id);
+  if(cont){                                       // a page just finished: always carry on with the next page from its very first word
+    x.page=P>=604?1:P+1;x.off=0;                 // (never jump into it: the seconds spent loading would cut words)
   }
-  LIVE={id,khatma:x.khatma,done:x.done};
+  LIVE={id,khatma:x.khatma,done:x.done,join:!cont};
   R=r;$('riwName').textContent='رواية '+r.name;renderRiw();
   resumeAt=x.off>1?x.off:0;liveNav=true;
   if(P===x.page){aud.dataset.src='';loadAudio(true);loadImg();renderMeta()}else show(x.page,1,true);
@@ -456,7 +456,7 @@ aud.addEventListener('play',setPlayIcon);aud.addEventListener('pause',setPlayIco
 aud.addEventListener('timeupdate',()=>{$('tCur').textContent=fmt(aud.currentTime);$('tDur').textContent=fmt(aud.duration);
   $('barFill').style.width=(aud.duration?aud.currentTime/aud.duration*100:0)+'%'});
 aud.addEventListener('waiting',()=>{$('status').textContent='جارٍ تحميل التلاوة…'});
-aud.addEventListener('playing',()=>{if(LIVE){liveStatus();const d=DUR[LIVE.id];if(d){const x=livePos(d);if(x.page===P&&Math.abs(aud.currentTime-x.off)>3&&x.off<(aud.duration||1e9)-2)aud.currentTime=x.off}return}$('status').classList.remove('live');$('status').textContent='رواية '+R.name+' · صفحة '+AR(P)});
+aud.addEventListener('playing',()=>{if(LIVE){liveStatus();const d=DUR[LIVE.id];if(d&&LIVE.join){LIVE.join=false;const x=livePos(d);if(x.page===P&&Math.abs(aud.currentTime-x.off)>3&&x.off<(aud.duration||1e9)-2)aud.currentTime=x.off}return}$('status').classList.remove('live');$('status').textContent='رواية '+R.name+' · صفحة '+AR(P)});
 aud.addEventListener('ended',()=>{store.set('pos','');if(LIVE){startLive(LIVE.id,true,true);return}if(auto&&P<604)show(P+1,1,true);else setPlayIcon()});
 let lastSave=0,resumeAt=0;
 function savePos(){if(R&&aud.currentTime>1)store.set('pos',JSON.stringify({p:P,r:R.id,t:Math.floor(aud.currentTime)}))}

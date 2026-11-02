@@ -170,7 +170,7 @@ main{max-width:620px;margin:0 auto;padding:14px 12px 150px}
 .qrgo button svg{width:58px;height:58px}
 .qrgo small{font-size:14px;font-weight:400}
 .toast{position:fixed;top:70px;left:50%;transform:translateX(-50%) translateY(-20px);background:var(--maroon);color:#fff;padding:8px 16px;border-radius:999px;font-size:14px;z-index:60;opacity:0;transition:.3s;pointer-events:none;white-space:nowrap}
-.toast.show{opacity:1;transform:translateX(-50%)}
+.toast.show{opacity:1;transform:translateX(-50%)}.toast.act{pointer-events:auto;white-space:normal;max-width:92vw;text-align:center}.toast button{margin-inline-start:10px;background:#fff;color:var(--maroon);border:0;border-radius:999px;padding:3px 12px;font:inherit;font-weight:700;cursor:pointer}
 .fallback{width:100%;height:80px;border:0;border-radius:8px;margin-top:6px;background:#fff}
 
 /* opening screen */
@@ -288,7 +288,11 @@ const aud=$('aud');const nextAud=new Audio();nextAud.preload='auto';nextAud.mute
 const ICON_PLAY='<path d="M8 5v14l11-7z"/>';
 const ICON_PAUSE='<path d="M6 5h4v14H6zm8 0h4v14h-4z"/>';
 
-function toast(m){const t=$('toast');t.textContent=m;t.classList.add('show');clearTimeout(t._h);t._h=setTimeout(()=>t.classList.remove('show'),2200)}
+function toast(m){const t=$('toast');t.classList.remove('act');t.textContent=m;t.classList.add('show');clearTimeout(t._h);t._h=setTimeout(()=>t.classList.remove('show'),2200)}
+function toastAct(m,label,fn){const t=$('toast');t.textContent=m;const b=document.createElement('button');b.textContent=label;b.onclick=()=>{t.classList.remove('show','act');fn()};t.append(b);t.classList.add('show','act');clearTimeout(t._h);t._h=setTimeout(()=>t.classList.remove('show','act'),6000)}
+/* each riwaya keeps its own bookmark (page + second), so returning to it carries on where its listener stopped */
+function bms(){try{return JSON.parse(store.get('bm')||'{}')}catch(e){return{}}}
+function setBm(id,p,t){if(!id)return;const b=bms();const o=b[id];b[id]={p,t:t!=null?t:(o&&o.p===p?o.t:0)};store.set('bm',JSON.stringify(b))}
 function audioUrl(r,p){
   if(!r||!r.audio) return null;
   if(r.audio.base&&p<=(r.audio.local||604)) return r.audio.base+String(p).padStart(3,'0')+'.mp3';
@@ -308,7 +312,7 @@ function renderMnote(){const el=$('mnote');if(!el)return;const fb=R&&R.id!=='haf
   el.hidden=!fb;if(fb)el.textContent=R.mushaf&&R.mushaf!=='hafs'?'صورة هذه الصفحة من مصحف حفص؛ صفحات مصحف رواية '+R.name+' متاحة حاليًا للصفحات ١–'+AR(R.mpages):'صورة الصفحة من مصحف حفص، ومصحف رواية '+R.name+' سيُضاف بإذن الله'}
 function loadImg(){$('loading').style.display='grid';const img=$('pimg');img.onload=()=>{$('loading').style.display='none'};img.src=imgUrl(P);renderMnote()}
 
-function syncUrl(){const u=new URL(location.href);u.searchParams.set('p',P);if(R)u.searchParams.set('r',R.id);history.replaceState(null,'',u);store.set('last',JSON.stringify({p:P,r:R&&R.id}))}
+function syncUrl(){const u=new URL(location.href);u.searchParams.set('p',P);if(R)u.searchParams.set('r',R.id);history.replaceState(null,'',u);store.set('last',JSON.stringify({p:P,r:R&&R.id}));if(R&&!LIVE)setBm(R.id,P)}
 
 function renderMeta(){
   const [s,j]=D.pages[P-1];const sura=D.suras[s-1][2];
@@ -355,7 +359,17 @@ function setRiwaya(id,quiet){
   const r=D.riwayat.find(x=>x.id===id);if(!r)return;
   if(!avail(r)&&!r.mpages&&!quiet){toast('رواية '+r.name+' ستُضاف قريبًا بإذن الله');return}
   if(LIVE&&LIVE.id!==id)exitLive();
-  const was=!aud.paused,old=R&&R.id;R=r;$('riwName').textContent='رواية '+r.name;
+  const was=!aud.paused,old=R&&R.id;
+  const fromP=P,bk=(!quiet&&!LIVE&&old!==r.id)?bms()[r.id]:null;
+  if(old!==r.id)savePos();                                   // remember where the previous riwaya stopped
+  R=r;$('riwName').textContent='رواية '+r.name;
+  if(bk&&bk.p&&(bk.p!==P||bk.t>2)){                          // carry on in this riwaya from its own bookmark
+    closeSheets();renderRiw();resumeAt=bk.t>2?bk.t:0;aud.dataset.src='';
+    if(bk.p!==P)show(bk.p,bk.p>P?1:-1,was);else{loadImg();renderMeta();syncUrl();loadAudio(was)}
+    const back=()=>{resumeAt=0;aud.dataset.src='';show(fromP,fromP>P?1:-1,!aud.paused||was)};
+    if(bk.p!==fromP)toastAct('رواية '+r.name+': تكمل من حيث توقفت – صفحة '+AR(bk.p),'ابقَ في ص '+AR(fromP),back);
+    else toast('رواية '+r.name+': تكمل من حيث توقفت');
+    return}
   if(old!==r.id&&$('pimg').getAttribute('src'))loadImg();
   aud.dataset.src='';closeSheets();renderRiw();renderMeta();syncUrl();loadAudio(was||!quiet);
 }
@@ -370,7 +384,7 @@ async function durations(id){                    // seconds of every page, from 
   if(LIVE_FALLBACK[id])return DUR[id]=LIVE_FALLBACK[id];      // fixed table: every listener gets the same one
   try{const c=JSON.parse(store.get('dur3:'+id)||'null');if(c&&c.length===604){return DUR[id]=c}}catch(e){}
   let arr=null;
-  try{const m=await fetch('https://archive.org/metadata/almasrawi-qiraat-'+id+'/files').then(r=>r.json());
+  try{const m=await fetch('https://archive.org/metadata/'+((D.riwayat.find(x=>x.id===id)||{}).audio||{}).archive+'/files').then(r=>r.json());
     const a=new Array(604).fill(NaN);for(const f of (m.result||[])){const x=/^Page_(\d+)\.mp3$/i.exec(f.name);if(x&&f.source==='original')a[+x[1]-1]=Math.round(sec(f.length)*100)/100}
     if(a.every(x=>x>0))arr=a}catch(e){}
   if(!arr&&LIVE_FALLBACK[id])arr=LIVE_FALLBACK[id];
@@ -379,7 +393,7 @@ async function durations(id){                    // seconds of every page, from 
 }
 function livePos(d){const T=d.reduce((a,b)=>a+b,0);const el=(Date.now()-EPOCH)/1000;const k=Math.floor(el/T);let t=el-k*T;
   let p=0;while(p<603&&t>=d[p]){t-=d[p];p++}return{page:p+1,off:t,khatma:k+1,T,done:(el-k*T)/T}}
-function liveR(){return D.riwayat.filter(r=>r.audio&&r.audio.archive&&r.id!=='ishaq')}
+function liveR(){return D.riwayat.filter(r=>r.audio&&r.audio.archive)}
 async function renderLive(){
   const by={};liveR().forEach(r=>(by[r.qari]=by[r.qari]||[]).push(r));
   $('liveList').innerHTML=Object.entries(by).map(([q,rs])=>`<div class="qari"><h3>قراءة ${q}</h3><div class="lgrid">${rs.map(r=>
@@ -457,9 +471,9 @@ aud.addEventListener('timeupdate',()=>{$('tCur').textContent=fmt(aud.currentTime
   $('barFill').style.width=(aud.duration?aud.currentTime/aud.duration*100:0)+'%'});
 aud.addEventListener('waiting',()=>{$('status').textContent='جارٍ تحميل التلاوة…'});
 aud.addEventListener('playing',()=>{if(LIVE){liveStatus();const d=DUR[LIVE.id];if(d&&LIVE.join){LIVE.join=false;const x=livePos(d);if(x.page===P&&Math.abs(aud.currentTime-x.off)>3&&x.off<(aud.duration||1e9)-2)aud.currentTime=x.off}return}$('status').classList.remove('live');$('status').textContent='رواية '+R.name+' · صفحة '+AR(P)});
-aud.addEventListener('ended',()=>{store.set('pos','');if(LIVE){startLive(LIVE.id,true,true);return}if(auto&&P<604)show(P+1,1,true);else setPlayIcon()});
+aud.addEventListener('ended',()=>{store.set('pos','');if(R&&!LIVE)setBm(R.id,Math.min(604,P+1),0);if(LIVE){startLive(LIVE.id,true,true);return}if(auto&&P<604)show(P+1,1,true);else setPlayIcon()});
 let lastSave=0,resumeAt=0;
-function savePos(){if(R&&aud.currentTime>1)store.set('pos',JSON.stringify({p:P,r:R.id,t:Math.floor(aud.currentTime)}))}
+function savePos(){if(R&&aud.currentTime>1&&aud.dataset.src===audioUrl(R,P)){store.set('pos',JSON.stringify({p:P,r:R.id,t:Math.floor(aud.currentTime)}));if(!LIVE)setBm(R.id,P,Math.floor(aud.currentTime))}}
 aud.addEventListener('timeupdate',()=>{const n=Date.now();if(n-lastSave>4000){lastSave=n;savePos()}
   if('mediaSession' in navigator&&navigator.mediaSession.setPositionState&&aud.duration>0){try{navigator.mediaSession.setPositionState({duration:aud.duration,position:Math.min(aud.currentTime,aud.duration),playbackRate:1})}catch(e){}}});
 aud.addEventListener('loadedmetadata',()=>{if(resumeAt>0&&resumeAt<aud.duration-2){aud.currentTime=resumeAt}resumeAt=0});

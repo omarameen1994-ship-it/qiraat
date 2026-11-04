@@ -1,0 +1,129 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>تثبيت مصحف الأمة</title>
+<meta name="theme-color" content="#1f4a39">
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="icons/favicon-64.png">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&display=swap" rel="stylesheet">
+<style>
+/* «مصحف الأمة» install page: one big button where the phone allows it, plain illustrated steps where it does not */
+:root{--green:#1f4a39;--green2:#2c6650;--gold:#c49a3e;--gold2:#e6c97f;--paper:#fbf6e9;--ink:#24312b;--muted:#6b6a5c;--card:#fffdf7}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:Amiri,serif;background:var(--paper);color:var(--ink);min-height:100vh;display:flex;flex-direction:column;align-items:center;padding:0 16px 40px}
+header{width:100%;max-width:560px;text-align:center;padding:28px 0 10px}
+header img{width:112px;height:112px;border-radius:26px;box-shadow:0 6px 22px rgba(31,74,57,.25)}
+h1{font-size:34px;color:var(--green);margin-top:12px}
+.sub{font-size:19px;color:var(--muted);margin-top:2px}
+main{width:100%;max-width:560px}
+.card{background:var(--card);border:1px solid #e4d8b8;border-radius:22px;padding:22px 20px;margin-top:18px;box-shadow:0 2px 10px rgba(0,0,0,.05)}
+.big{display:block;width:100%;background:var(--green);color:#fff;border:0;border-radius:18px;font:700 28px Amiri,serif;padding:18px 10px;cursor:pointer;text-align:center;text-decoration:none;box-shadow:0 4px 0 #12301f}
+.big:active{transform:translateY(2px);box-shadow:0 2px 0 #12301f}
+.big.gold{background:var(--gold);box-shadow:0 4px 0 #8a6a22}
+.lead{font-size:23px;line-height:1.7;text-align:center;margin-bottom:16px}
+ol{list-style:none;counter-reset:s}
+ol li{counter-increment:s;display:flex;gap:14px;align-items:center;font-size:23px;line-height:1.6;padding:12px 0;border-bottom:1px dashed #e4d8b8}
+ol li:last-child{border-bottom:0}
+ol li::before{content:counter(s,arabic-indic);flex:none;width:44px;height:44px;border-radius:50%;background:var(--green);color:#fff;font:700 24px Amiri,serif;display:grid;place-items:center}
+.ico{display:inline-grid;place-items:center;vertical-align:middle;width:38px;height:38px;border:2px solid var(--green);border-radius:10px;margin:0 4px;color:var(--green)}
+.ico svg{width:24px;height:24px}
+.ok{text-align:center;font-size:26px;color:var(--green);line-height:1.7}
+.ok b{font-size:32px}
+.small{font-size:18px;color:var(--muted);text-align:center;margin-top:14px;line-height:1.6}
+.link{color:var(--green2);font-size:20px;text-align:center;display:block;margin-top:16px}
+#qr{display:block;margin:10px auto 0;width:220px;height:220px}
+[hidden]{display:none!important}
+</style>
+</head>
+<body>
+<header>
+  <img src="icons/logo-240.png" alt="شعار مصحف الأمة">
+  <h1>مصحف الأمة</h1>
+  <div class="sub">القراءات العشر بصوت الشيخ أحمد المعصراوي</div>
+</header>
+<main>
+
+  <!-- Android Chrome / desktop Chrome / Edge: the browser's own one-tap install -->
+  <section class="card" id="vOne" hidden>
+    <p class="lead">اضغط الزر، ثم اختر «تثبيت»</p>
+    <button class="big" id="btnInstall">ثبّت التطبيق</button>
+  </section>
+
+  <!-- Android, inside WhatsApp or another app's browser: hand the link to Chrome -->
+  <section class="card" id="vChrome" hidden>
+    <p class="lead">لتثبيت التطبيق نفتح الرابط في متصفح Chrome</p>
+    <a class="big" id="btnChrome" href="#">افتح في Chrome</a>
+    <p class="small">ستُفتح هذه الصفحة نفسها في Chrome، وفيها زر التثبيت.</p>
+  </section>
+
+  <!-- Android, prompt not offered: the menu route -->
+  <section class="card" id="vAndroidMenu" hidden>
+    <ol>
+      <li><span>اضغط النقاط الثلاث <span class="ico"><svg viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="5" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="12" cy="19" r="2"/></svg></span> أعلى الشاشة</span></li>
+      <li><span>اختر «تثبيت التطبيق» أو «إضافة إلى الشاشة الرئيسية»</span></li>
+      <li><span>اضغط «تثبيت»</span></li>
+    </ol>
+  </section>
+
+  <!-- iPhone / iPad, Safari -->
+  <section class="card" id="vIOS" hidden>
+    <p class="lead">ثلاث خطوات فقط في Safari:</p>
+    <ol>
+      <li><span>اضغط زر المشاركة <span class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v13"/><path d="M7 8l5-5 5 5"/><path d="M5 12v7a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-7"/></svg></span> أسفل الشاشة</span></li>
+      <li><span>انزل قليلًا واختر «إضافة إلى الشاشة الرئيسية» <span class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="4" y="4" width="16" height="16" rx="3"/><path d="M12 8v8M8 12h8"/></svg></span></span></li>
+      <li><span>اضغط «إضافة» أعلى الشاشة</span></li>
+    </ol>
+  </section>
+
+  <!-- iPhone, inside WhatsApp or Chrome: only Safari can install -->
+  <section class="card" id="vSafari" hidden>
+    <p class="lead">على الآيفون يكون التثبيت من متصفح Safari</p>
+    <a class="big" id="btnSafari" href="#">افتح في Safari</a>
+    <p class="small">إن لم يفتح: انسخ الرابط والصقه في Safari، أو اضغط النقاط/السهم أعلى الشاشة واختر «فتح في Safari».</p>
+  </section>
+
+  <!-- computer: scan with the phone -->
+  <section class="card" id="vDesk" hidden>
+    <p class="lead">امسح الرمز بكاميرا الجوال لتثبيت التطبيق عليه</p>
+    <img id="qr" alt="رمز الرابط">
+  </section>
+
+  <!-- done / already installed -->
+  <section class="card" id="vDone" hidden>
+    <p class="ok"><b>تمّ التثبيت بحمد الله</b><br>ستجد أيقونة «مصحف الأمة» على شاشة الجوال</p>
+  </section>
+
+  <a class="link" href="./">أو افتح المصحف الآن دون تثبيت ←</a>
+</main>
+<script>
+(()=>{
+const $=id=>document.getElementById(id), show=id=>{document.querySelectorAll('section.card').forEach(s=>s.hidden=s.id!==id)};
+const ua=navigator.userAgent, ios=/iphone|ipad|ipod/i.test(ua)||(navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1);
+const android=/android/i.test(ua);
+const inApp=/FBAN|FBAV|Instagram|WhatsApp|Line\/|Snapchat|Twitter|TikTok|; wv\)/i.test(ua);
+const iosSafari=ios&&/Safari/i.test(ua)&&!/CriOS|FxiOS|EdgiOS|OPiOS|GSA\//i.test(ua)&&!inApp;
+const standalone=matchMedia('(display-mode: standalone)').matches||navigator.standalone;
+const here=location.href.split('#')[0];
+if(standalone){location.replace('./');return}
+if('serviceWorker' in navigator)navigator.serviceWorker.register('sw.js').catch(()=>{});
+let deferred=null;
+addEventListener('beforeinstallprompt',e=>{e.preventDefault();deferred=e;show('vOne')});
+addEventListener('appinstalled',()=>show('vDone'));
+$('btnInstall').onclick=async()=>{if(!deferred)return;deferred.prompt();const c=await deferred.userChoice.catch(()=>({}));deferred=null;if(c&&c.outcome==='accepted')show('vDone')};
+$('btnChrome').href='intent://'+here.replace(/^https?:\/\//,'')+'#Intent;scheme=https;package=com.android.chrome;end';
+$('btnSafari').href='x-safari-'+here;
+if(ios){show(iosSafari?'vIOS':'vSafari')}
+else if(android){
+  if(inApp)show('vChrome');
+  else setTimeout(()=>{if(!deferred)show('vAndroidMenu')},2500);   // the prompt usually arrives within a second
+}else{
+  setTimeout(()=>{if(!deferred){show('vDesk');$('qr').src='https://api.qrserver.com/v1/create-qr-code/?size=440x440&margin=8&data='+encodeURIComponent(here)}},1500);
+}
+})();
+</script>
+</body>
+</html>

@@ -291,6 +291,8 @@ const ICON_PAUSE='<path d="M6 5h4v14H6zm8 0h4v14h-4z"/>';
 function toast(m){const t=$('toast');t.classList.remove('act');t.textContent=m;t.classList.add('show');clearTimeout(t._h);t._h=setTimeout(()=>t.classList.remove('show'),2200)}
 function toastAct(m,label,fn){const t=$('toast');t.textContent=m;const b=document.createElement('button');b.textContent=label;b.onclick=()=>{t.classList.remove('show','act');fn()};t.append(b);t.classList.add('show','act');clearTimeout(t._h);t._h=setTimeout(()=>t.classList.remove('show','act'),6000)}
 /* each riwaya keeps its own bookmark (page + second), so returning to it carries on where its listener stopped */
+/* where page p begins when it follows page p-1 without a stop: some recordings repeat the end of the previous page */
+function skipFor(r,p){return (r&&r.audio&&r.audio.skip&&r.audio.skip[String(p)])||0}
 function bms(){try{return JSON.parse(store.get('bm')||'{}')}catch(e){return{}}}
 function setBm(id,p,t){if(!id)return;const b=bms();const o=b[id];b[id]={p,t:t!=null?t:(o&&o.p===p?o.t:0)};store.set('bm',JSON.stringify(b))}
 function audioUrl(r,p){
@@ -413,7 +415,7 @@ async function startLive(id,silent,fromEnded){
   const x=livePos(d);
   const cont=!!(fromEnded&&LIVE&&LIVE.id===id);
   if(cont){                                       // a page just finished: always carry on with the next page from its very first word
-    x.page=P>=604?1:P+1;x.off=0;                 // (never jump into it: the seconds spent loading would cut words)
+    x.page=P>=604?1:P+1;x.off=skipFor(r,x.page);                 // (never jump into it: the seconds spent loading would cut words)
   }
   LIVE={id,khatma:x.khatma,done:x.done,join:!cont};
   R=r;$('riwName').textContent='رواية '+r.name;renderRiw();
@@ -471,7 +473,7 @@ aud.addEventListener('timeupdate',()=>{$('tCur').textContent=fmt(aud.currentTime
   $('barFill').style.width=(aud.duration?aud.currentTime/aud.duration*100:0)+'%'});
 aud.addEventListener('waiting',()=>{$('status').textContent='جارٍ تحميل التلاوة…'});
 aud.addEventListener('playing',()=>{if(LIVE){liveStatus();const d=DUR[LIVE.id];if(d&&LIVE.join){LIVE.join=false;const x=livePos(d);if(x.page===P&&Math.abs(aud.currentTime-x.off)>3&&x.off<(aud.duration||1e9)-2)aud.currentTime=x.off}return}$('status').classList.remove('live');$('status').textContent='رواية '+R.name+' · صفحة '+AR(P)});
-aud.addEventListener('ended',()=>{store.set('pos','');if(R&&!LIVE)setBm(R.id,Math.min(604,P+1),0);if(LIVE){startLive(LIVE.id,true,true);return}if(auto&&P<604)show(P+1,1,true);else setPlayIcon()});
+aud.addEventListener('ended',()=>{store.set('pos','');if(R&&!LIVE)setBm(R.id,Math.min(604,P+1),0);if(LIVE){startLive(LIVE.id,true,true);return}if(auto&&P<604){resumeAt=skipFor(R,P+1);show(P+1,1,true)}else setPlayIcon()});
 let lastSave=0,resumeAt=0;
 function savePos(){if(R&&aud.currentTime>1&&aud.dataset.src===audioUrl(R,P)){store.set('pos',JSON.stringify({p:P,r:R.id,t:Math.floor(aud.currentTime)}));if(!LIVE)setBm(R.id,P,Math.floor(aud.currentTime))}}
 aud.addEventListener('timeupdate',()=>{const n=Date.now();if(n-lastSave>4000){lastSave=n;savePos()}

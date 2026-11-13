@@ -16,7 +16,7 @@
 <meta name="description" content="استمع إلى المصحف الشريف بالروايات العشرين صفحةً صفحة، مع هوامش القراءات العشر.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Amiri+Quran&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Amiri+Quran&family=Scheherazade+New:wght@400;700&display=swap" rel="stylesheet">
 <style>
 :root{
   --green:#1f4a39; --green2:#2c6650; --gold:#c49a3e; --gold2:#e6c97f; --maroon:#8e1b1b;
@@ -73,7 +73,7 @@ main{max-width:620px;margin:0 auto;padding:14px 12px 150px}
 .notes summary::-webkit-details-marker{display:none}
 .notes summary .chev{margin-inline-start:auto;transition:transform .2s}
 .notes[open] summary .chev{transform:rotate(180deg)}
-.nbody{padding:2px 16px 16px;font-size:17px;line-height:1.85;text-align:justify}
+.nbody{padding:2px 16px 16px;font-size:17px;line-height:1.85;text-align:start;word-spacing:-.02em}
 .nbody p{margin-bottom:.25em}
 .nbody p.h{display:inline-block;margin:.5em 0 .15em;padding:0 10px;border-radius:6px;background:var(--maroon);color:#fff;font-weight:700;font-size:.9em}
 .nbody p.h *{color:#fff!important}
@@ -82,7 +82,7 @@ main{max-width:620px;margin:0 auto;padding:14px 12px 150px}
 .nbody table.vt{border-collapse:collapse;margin:6px auto 10px;min-width:62%;font-size:15px}
 .nbody table.vt th,.nbody table.vt td{border:1px solid var(--gold);padding:3px 14px;text-align:center}
 .nbody table.vt th{background:rgba(196,154,62,.14)}
-.nbody .ay{font-family:"Amiri Quran",Amiri,serif;color:var(--green2)}
+.nbody .ay{font-family:"Scheherazade New","Amiri Quran",Amiri,serif;font-size:1.06em;color:var(--green2)}
 @media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .nbody .ay{color:var(--gold2)}}
 
 /* player */
